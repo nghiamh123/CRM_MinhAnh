@@ -1,0 +1,199 @@
+.searchable-select-container {
+  position: relative;
+  width: 100%;
+}
+
+/* Trigger Button */
+.searchable-select-trigger {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 44px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.searchable-select-trigger:hover {
+  border-color: #cbd5e1;
+}
+
+.searchable-select-trigger.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.searchable-select-trigger span {
+  font-size: 0.9375rem;
+  color: var(--text);
+}
+
+.searchable-select-trigger .placeholder {
+  color: #94a3b8;
+}
+
+.chevron {
+  color: #94a3b8;
+  transition: transform 0.2s;
+}
+
+.chevron.open {
+  transform: rotate(180deg);
+}
+
+/* Dropdown Container */
+.searchable-select-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 100%;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+  z-index: 1100;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Search Box */
+.search-box {
+  position: relative;
+  padding: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.search-icon {
+  position: absolute;
+  left: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #64748b;
+}
+
+.clear-icon {
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  background: #f1f5f9;
+}
+
+.clear-icon:hover {
+  color: var(--text);
+  background: #e2e8f0;
+}
+
+.search-box input {
+  padding: 10px 36px 10px 40px;
+  margin-top: 0;
+  background: white;
+  border: 1px solid #e2e8f0;
+  font-size: 0.9375rem;
+}
+
+.search-box input:focus {
+  border-color: var(--primary);
+}
+
+/* Results / Header Info */
+.results-info {
+  padding: 12px 14px 6px 14px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: capitalize;
+}
+
+/* Options List */
+.options-list {
+  padding: 4px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.select-option {
+  padding: 10px 12px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-bottom: 2px;
+}
+
+.select-option:hover {
+  background: #f8fafc;
+}
+
+.select-option.selected {
+  background: #f1f5f9;
+  color: var(--text);
+}
+
+.option-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.option-name {
+  font-weight: 500;
+  font-size: 0.9375rem;
+}
+
+.option-subtext {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.check-icon {
+  color: var(--text);
+  margin-left: 8px;
+}
+
+/* No Results State */
+.no-results-container {
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.no-results-icon-box {
+  width: 48px;
+  height: 48px;
+  background: #f1f5f9;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #94a3b8;
+  margin-bottom: 12px;
+}
+
+.no-results-title {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.no-results-text {
+  font-size: 0.875rem;
+  color: #64748b;
+  max-width: 200px;
+  line-height: 1.4;
+}
