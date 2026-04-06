@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, CheckCircle } from 'lucide-react';
+import { Plus, Edit2, Trash2, CheckCircle, ChevronLeft, ChevronRight, Minus, X } from 'lucide-react';
 import { rentalService, customerService, deviceService } from '../services/api';
-import Modal from '../components/Modal';
 import SearchableSelect from '../components/SearchableSelect';
 import { formatVND } from '../utils/format';
+import '../styles/Breadcrumbs.css';
 
 const Rentals = () => {
   const [rentals, setRentals] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [devices, setDevices] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [view, setView] = useState('list'); // 'list', 'add', 'edit'
   const [editingRental, setEditingRental] = useState(null);
   const [deviceFilterType, setDeviceFilterType] = useState('all');
   const [deviceSearchTerm, setDeviceSearchTerm] = useState('');
-  const [customerFormData, setCustomerFormData] = useState({ name: '', phone: '', identityCard: '', email: '', notes: '' });
+  const [customerFormData, setCustomerFormData] = useState({ name: '', phone: '', identityCard: '', email: '', notes: '', isRental: false });
   const [formData, setFormData] = useState({ 
     customerId: '', 
     devices: [], 
@@ -41,7 +41,7 @@ const Rentals = () => {
     fetchSupportData();
   }, []);
 
-  const handleOpenModal = (rental = null) => {
+  const handleOpenForm = (rental = null) => {
     setEditingRental(rental);
     if (rental) {
       const cId = rental.customerId?.id || rental.customerId?._id || rental.customerId;
@@ -61,9 +61,11 @@ const Rentals = () => {
           phone: cust.phone || '',
           identityCard: cust.identityCard || '',
           email: cust.email || '',
-          notes: cust.notes || ''
+          notes: cust.notes || '',
+          isRental: cust.isRental || false
         });
       }
+      setView('edit');
     } else {
       setFormData({ 
         customerId: '', 
@@ -72,11 +74,16 @@ const Rentals = () => {
         plannedReturnDate: '',
         status: 'renting'
       });
-      setCustomerFormData({ name: '', phone: '', identityCard: '', email: '', notes: '' });
+      setCustomerFormData({ name: '', phone: '', identityCard: '', email: '', notes: '', isRental: false });
+      setView('add');
     }
     setDeviceFilterType('all');
     setDeviceSearchTerm('');
-    setIsModalOpen(true);
+  };
+
+  const handleBack = () => {
+    setView('list');
+    setEditingRental(null);
   };
 
   const handleSubmit = async (e) => {
@@ -84,7 +91,6 @@ const Rentals = () => {
     
     let finalCustomerId = formData.customerId;
 
-    // Nếu người dùng điền tên khách mới và không chọn khách cũ
     if (customerFormData.name && !finalCustomerId) {
       try {
         const cRes = await customerService.create(customerFormData);
@@ -115,7 +121,6 @@ const Rentals = () => {
       }))
     };
 
-    // Cập nhật thông tin khách hàng nếu có thay đổi (nếu là khách cũ)
     if (formData.customerId) {
         await customerService.update(formData.customerId, customerFormData);
     }
@@ -126,7 +131,7 @@ const Rentals = () => {
       await rentalService.create(payload);
     }
     
-    setIsModalOpen(false);
+    handleBack();
     fetchRentals();
     fetchSupportData(); 
   };
@@ -163,7 +168,6 @@ const Rentals = () => {
     newDevices[idx].quantity += delta;
     if (newDevices[idx].quantity < 1) newDevices[idx].quantity = 1;
     
-    // Optional: Validate against stock
     const dObj = newDevices[idx].device;
     const stock = dObj.availableQuantity || 0;
     if (!editingRental && newDevices[idx].quantity > stock) {
@@ -201,11 +205,223 @@ const Rentals = () => {
     return isAvailable && matchesFilter && matchesSearch;
   });
 
+  if (view !== 'list') {
+    return (
+      <div className="container">
+        <div className="breadcrumb-container">
+          <span className="breadcrumb-item" onClick={handleBack}>Đơn thuê</span>
+          <ChevronRight className="breadcrumb-separator" size={16} />
+          <span className="breadcrumb-item active">{view === 'add' ? 'Tạo đơn mới' : 'Cập nhật đơn'}</span>
+        </div>
+
+        <div className="form-section-card">
+          <div className="back-button" onClick={handleBack}>
+            <ChevronLeft size={18} />
+            Quay lại danh sách
+          </div>
+          
+          <h2 style={{ marginBottom: '1.5rem' }}>{view === 'add' ? 'Tạo đơn thuê mới' : `Cập nhật đơn: #${editingRental.id}`}</h2>
+
+          <form onSubmit={handleSubmit}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '2rem' }}>
+              <div>
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>1. Khách hàng (Chọn có sẵn)</label>
+                  <SearchableSelect 
+                    options={customers}
+                    value={formData.customerId}
+                    onChange={val => {
+                      setFormData({...formData, customerId: val});
+                      if (val) {
+                        const cust = customers.find(c => c.id === val || c._id === val);
+                        if (cust) {
+                          setCustomerFormData({
+                            name: cust.name || '',
+                            phone: cust.phone || '',
+                            identityCard: cust.identityCard || '',
+                            email: cust.email || '',
+                            notes: cust.notes || '',
+                            isRental: cust.isRental || false
+                          });
+                        }
+                      } else {
+                        setCustomerFormData({ name: '', phone: '', identityCard: '', email: '', notes: '', isRental: false });
+                      }
+                    }}
+                    placeholder="Chọn khách hàng..."
+                    searchPlaceholder="Tìm tên hoặc số điện thoại..."
+                  />
+                </div>
+
+                <div style={{ padding: '1.25rem', background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '12px', marginBottom: '1.5rem' }}>
+                  <label style={{ color: 'var(--primary)', fontSize: '0.85rem', fontWeight: 700, display: 'block', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    {formData.customerId ? 'Chi tiết khách hàng' : 'Thông tin khách hàng mới'}
+                  </label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <input 
+                      placeholder="Tên khách hàng *"
+                      value={customerFormData.name}
+                      onChange={e => {
+                        setCustomerFormData({...customerFormData, name: e.target.value});
+                        if (e.target.value) setFormData({...formData, customerId: ''});
+                      }}
+                    />
+                    <input 
+                      placeholder="Số điện thoại"
+                      value={customerFormData.phone}
+                      onChange={e => setCustomerFormData({...customerFormData, phone: e.target.value})}
+                    />
+                    <input 
+                      placeholder="Số căn cước"
+                      value={customerFormData.identityCard}
+                      onChange={e => setCustomerFormData({...customerFormData, identityCard: e.target.value})}
+                    />
+                    <input 
+                      placeholder="Ghi chú thêm..."
+                      value={customerFormData.notes}
+                      onChange={e => setCustomerFormData({...customerFormData, notes: e.target.value})}
+                    />
+                  </div>
+                  <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '10px', padding: '8px', background: 'white', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                    <input 
+                      type="checkbox"
+                      id="isRental"
+                      checked={customerFormData.isRental}
+                      onChange={e => setCustomerFormData({...customerFormData, isRental: e.target.checked})}
+                      style={{ width: 'auto', cursor: 'pointer', scale: '1.2' }}
+                    />
+                    <label htmlFor="isRental" style={{ fontSize: '0.9rem', cursor: 'pointer', fontWeight: 600, color: '#334155' }}>Đánh dấu là Rental (Cửa hàng/Đối tác)</label>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>2. Ngày thuê</label>
+                    <input 
+                      type="date" 
+                      required
+                      value={formData.rentalDate}
+                      onChange={e => setFormData({...formData, rentalDate: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>3. Hẹn ngày trả</label>
+                    <input 
+                      type="date" 
+                      required
+                      value={formData.plannedReturnDate}
+                      onChange={e => setFormData({...formData, plannedReturnDate: e.target.value})}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ borderLeft: '1px solid #f1f5f9', paddingLeft: '2rem' }}>
+                <label style={{ display: 'block', marginBottom: '1rem', fontWeight: 700, fontSize: '1.1rem', color: 'var(--primary)' }}>4. Giỏ hàng thiết bị</label>
+                
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '1rem' }}>
+                  <select 
+                    style={{ width: '130px' }}
+                    value={deviceFilterType}
+                    onChange={e => setDeviceFilterType(e.target.value)}
+                  >
+                    <option value="all">Tất cả loại</option>
+                    <option value="camera">Camera</option>
+                    <option value="lens">Lens</option>
+                    <option value="tripod">Tripod</option>
+                  </select>
+                  <input 
+                    placeholder="Tìm thiết bị nhanh..."
+                    style={{ flex: 1 }}
+                    value={deviceSearchTerm}
+                    onChange={e => setDeviceSearchTerm(e.target.value)}
+                  />
+                </div>
+
+                <div style={{ maxHeight: '220px', overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '8px', marginBottom: '1.5rem', background: '#fff' }}>
+                  {availableDevices.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '1rem', color: '#94a3b8', fontSize: '0.9rem' }}>Không tìm thấy thiết bị phù hợp</div>
+                  ) : (
+                    availableDevices.map(device => (
+                      <div 
+                        key={device.id} 
+                        className="flex-between"
+                        style={{ padding: '10px 12px', borderBottom: '1px solid #f1f5f9', fontSize: '0.9rem', cursor: 'pointer', borderRadius: '8px', transition: 'background 0.2s' }}
+                        onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        onClick={() => {
+                          if (formData.devices.find(d => d.device.id === device.id)) return;
+                          setFormData({
+                            ...formData,
+                            devices: [...formData.devices, { device: device, quantity: 1, pricePerDay: device.pricePerDay }]
+                          });
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontWeight: 600 }}>{device.name}</div>
+                          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Loại: {device.type} | Kho: {device.availableQuantity}</div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{ fontWeight: 700, color: 'var(--success)' }}>{formatVND(device.pricePerDay)}</span>
+                          <Plus size={18} color="var(--primary)" />
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div style={{ minHeight: '180px' }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#475569', marginBottom: '10px', display: 'block', textTransform: 'uppercase' }}>Danh sách đã chọn</label>
+                  {formData.devices.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#94a3b8', border: '2px dashed #e2e8f0', borderRadius: '12px' }}>
+                      Giỏ hàng đang trống. Chọn thiết bị bên trên để thêm vào đơn.
+                    </div>
+                  ) : (
+                    formData.devices.map((item, idx) => (
+                      <div key={idx} style={{ background: '#f8fafc', padding: '12px', borderRadius: '10px', marginBottom: '10px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{item.device.name}</div>
+                          <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Đơn giá: {formatVND(item.pricePerDay)}/ngày</div>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', background: 'white', border: '1px solid #cbd5e1', borderRadius: '6px' }}>
+                            <button type="button" onClick={() => handleUpdateQty(idx, -1)} style={{ padding: '4px 10px', border: 'none', background: 'none' }}><Minus size={16} /></button>
+                            <span style={{ padding: '0 10px', fontWeight: 700, minWidth: '35px', textAlign: 'center', fontSize: '1rem' }}>{item.quantity}</span>
+                            <button type="button" onClick={() => handleUpdateQty(idx, 1)} style={{ padding: '4px 10px', border: 'none', background: 'none' }}><Plus size={16} /></button>
+                          </div>
+                          <button type="button" onClick={() => handleRemoveDevice(idx)} style={{ color: 'var(--danger)', background: 'none', border: 'none', padding: '5px' }}><X size={20} /></button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '2px solid #e2e8f0' }}>
+                  <div className="flex-between">
+                    <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>TỔNG TIỀN DỰ KIẾN:</span>
+                    <span style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--primary)' }}>
+                      {formatVND(calculateTotal())}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex-between" style={{ marginTop: '3rem', borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem' }}>
+              <button type="button" className="btn-outline" onClick={handleBack} style={{ padding: '0.8rem 2.5rem', fontWeight: 600 }}>Hủy bỏ</button>
+              <button type="submit" className="btn-primary" style={{ padding: '0.8rem 4rem', fontWeight: 700, fontSize: '1rem', boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)' }}>Xác nhận & Lưu đơn hàng</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container">
       <div className="flex-between">
         <h1 style={{ fontSize: '1.875rem', fontWeight: 700 }}>Quản lý đơn thuê</h1>
-        <button className="btn-primary" onClick={() => handleOpenModal()}>
+        <button className="btn-primary" onClick={() => handleOpenForm()}>
           <Plus size={20} />
           <span>Tạo đơn thuê</span>
         </button>
@@ -253,7 +469,7 @@ const Rentals = () => {
                       {rental.status !== 'returned' && (
                         <button onClick={() => handleReturn(rental)} style={{ color: 'var(--success)' }} title="Trả máy"><CheckCircle size={18} /></button>
                       )}
-                      <button onClick={() => handleOpenModal(rental)} style={{ color: 'var(--primary)' }}><Edit2 size={18} /></button>
+                      <button onClick={() => handleOpenForm(rental)} style={{ color: 'var(--primary)' }}><Edit2 size={18} /></button>
                       <button onClick={() => handleDelete(rental.id)} style={{ color: 'var(--danger)' }}><Trash2 size={18} /></button>
                     </div>
                   </td>
@@ -263,193 +479,6 @@ const Rentals = () => {
           </table>
         </div>
       </div>
-
-      <Modal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        title={editingRental ? "Cập nhật đơn thuê" : "Tạo đơn thuê mới"}
-      >
-        <form onSubmit={handleSubmit}>
-          <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>1. Khách hàng (Chọn có sẵn)</label>
-            <SearchableSelect 
-              options={customers}
-              value={formData.customerId}
-              onChange={val => {
-                setFormData({...formData, customerId: val});
-                if (val) {
-                  const cust = customers.find(c => c.id === val || c._id === val);
-                  if (cust) {
-                    setCustomerFormData({
-                      name: cust.name || '',
-                      phone: cust.phone || '',
-                      identityCard: cust.identityCard || '',
-                      email: cust.email || '',
-                      notes: cust.notes || ''
-                    });
-                  }
-                } else {
-                  setCustomerFormData({ name: '', phone: '', identityCard: '', email: '', notes: '' });
-                }
-              }}
-              placeholder="Chọn khách hàng..."
-              searchPlaceholder="Tìm tên hoặc số điện thoại..."
-            />
-          </div>
-
-          <div style={{ padding: '1rem', background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '8px', marginTop: '1rem' }}>
-            <label style={{ color: 'var(--text-light)', fontSize: '0.8rem', fontWeight: 600, display: 'block', marginBottom: '0.75rem' }}>
-              {formData.customerId ? 'THÔNG TIN CHI TIẾT KHÁCH HÀNG' : 'HOẶC TẠO KHÁCH HÀNG MỚI'}
-            </label>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-              <input 
-                placeholder="Tên khách hàng *"
-                value={customerFormData.name}
-                onChange={e => {
-                  setCustomerFormData({...customerFormData, name: e.target.value});
-                  if (e.target.value) setFormData({...formData, customerId: ''});
-                }}
-              />
-              <input 
-                placeholder="Số điện thoại"
-                value={customerFormData.phone}
-                onChange={e => {
-                  setCustomerFormData({...customerFormData, phone: e.target.value});
-                  if (e.target.value) setFormData({...formData, customerId: ''});
-                }}
-              />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '10px' }}>
-              <input 
-                placeholder="Số căn cước"
-                value={customerFormData.identityCard}
-                onChange={e => {
-                  setCustomerFormData({...customerFormData, identityCard: e.target.value});
-                  if (e.target.value) setFormData({...formData, customerId: ''});
-                }}
-              />
-              <input 
-                placeholder="Ghi chú thêm..."
-                value={customerFormData.notes}
-                onChange={e => {
-                  setCustomerFormData({...customerFormData, notes: e.target.value});
-                  if (e.target.value) setFormData({...formData, customerId: ''});
-                }}
-              />
-            </div>
-          </div>
-
-          <div style={{ marginTop: '1.5rem', borderTop: '1px solid #eee', paddingTop: '1.5rem' }}>
-            <label style={{ display:' block', marginBottom: '8px', fontWeight: '600' }}>2. Chọn thiết bị (Giỏ hàng)</label>
-            <SearchableSelect 
-              options={availableDevices}
-              value={''} // always reset
-              onChange={val => {
-                if(!val) return;
-                const d = availableDevices.find(dev => dev.id === val);
-                if(d) {
-                  // Add to array
-                  const existingIdx = formData.devices.findIndex(item => {
-                    const id1 = item.device?.id || item.device?._id || item.device;
-                    return id1 === val;
-                  });
-                  if (existingIdx >= 0) {
-                    handleUpdateQty(existingIdx, 1);
-                  } else {
-                    if (!editingRental && d.availableQuantity < 1) {
-                      alert('Thiết bị này đã hết hàng trong kho!');
-                      return;
-                    }
-                    setFormData({...formData, devices: [...formData.devices, { device: d, quantity: 1, pricePerDay: d.pricePerDay }]});
-                  }
-                }
-              }}
-              placeholder="Thêm máy vào đơn thuê..."
-              searchPlaceholder="Tìm tên thiết bị..."
-              categories={[
-                { value: 'all', label: 'Tất cả' },
-                { value: 'camera', label: 'Camera' },
-                { value: 'lens', label: 'Lens' },
-                { value: 'tripod', label: 'Tripod' },
-                { value: 'accessory', label: 'Phụ kiện' }
-              ]}
-              selectedCategory={deviceFilterType}
-              onCategoryChange={setDeviceFilterType}
-              renderOption={(opt) => (
-                <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', gap: '10px'}}>
-                    <span style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'capitalize' }}>{opt.type}</span>
-                    <span style={{ fontWeight: 500 }}>{opt.name}</span>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                    <span style={{ fontWeight: 600, color: 'var(--primary)', fontSize: '0.85rem' }}>
-                      {formatVND(opt.pricePerDay)}
-                    </span>
-                    <span style={{ fontSize: '0.7rem', color: opt.availableQuantity > 0 ? 'var(--success)' : 'var(--danger)' }}>
-                      Kho: {opt.availableQuantity || 0}
-                    </span>
-                  </div>
-                </div>
-              )}
-            />
-
-            {/* Cart UI */}
-            {formData.devices.length > 0 && (
-              <div style={{ marginTop: '1rem', border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden' }}>
-                {formData.devices.map((item, idx) => {
-                   const dObj = item.device;
-                   return (
-                     <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 15px', borderBottom: '1px solid var(--border)', alignItems: 'center', background: 'white' }}>
-                       <div>
-                         <div style={{ fontWeight: 600 }}>{dObj.name || dObj}</div>
-                         <div style={{ color: 'var(--text-light)', fontSize: '0.8rem' }}>{formatVND(item.pricePerDay)}/ngày</div>
-                       </div>
-                       <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                         <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                           <button type="button" onClick={() => handleUpdateQty(idx, -1)} style={{ padding: '4px 8px', background: '#f8fafc', border: 'none', borderRight: '1px solid #e2e8f0', cursor: 'pointer' }}>-</button>
-                           <span style={{ padding: '0 12px', fontSize: '0.9rem', fontWeight: 600, minWidth: '32px', textAlign: 'center' }}>{item.quantity}</span>
-                           <button type="button" onClick={() => handleUpdateQty(idx, 1)} style={{ padding: '4px 8px', background: '#f8fafc', border: 'none', borderLeft: '1px solid #e2e8f0', cursor: 'pointer' }}>+</button>
-                         </div>
-                         <button type="button" onClick={() => handleRemoveDevice(idx)} style={{ color: 'var(--danger)', background: 'none', border: 'none', cursor: 'pointer' }}><Trash2 size={16} /></button>
-                       </div>
-                     </div>
-                   );
-                })}
-              </div>
-            )}
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
-            <div>
-              <label>Ngày thuê</label>
-              <input 
-                type="date"
-                required
-                value={formData.rentalDate}
-                onChange={e => setFormData({...formData, rentalDate: e.target.value})}
-              />
-            </div>
-            <div>
-              <label>Ngày trả dự kiến</label>
-              <input 
-                type="date"
-                required
-                value={formData.plannedReturnDate}
-                onChange={e => setFormData({...formData, plannedReturnDate: e.target.value})}
-              />
-            </div>
-          </div>
-          <div style={{ padding: '15px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #cbd5e1', marginTop: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontWeight: 600, color: 'var(--text-color)' }}>Tổng tiền dự kiến:</span>
-            <span style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--primary)' }}>
-              {formatVND(calculateTotal())}
-            </span>
-          </div>
-          <div className="flex-between" style={{ marginTop: '1.5rem' }}>
-            <button type="button" className="btn-outline" onClick={() => setIsModalOpen(false)}>Hủy</button>
-            <button type="submit" className="btn-primary">Lưu đơn thuê</button>
-          </div>
-        </form>
-      </Modal>
     </div>
   );
 };

@@ -17,7 +17,8 @@ const customerSchema = new mongoose.Schema({
   email: { type: String },
   address: { type: String },
   identityCard: { type: String },
-  notes: { type: String }
+  notes: { type: String },
+  isRental: { type: Boolean, default: false }
 }, schemaOptions);
 
 module.exports = mongoose.model('Customer', customerSchema);
