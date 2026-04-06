@@ -1,5 +1,6 @@
 import React from 'react';
 
+// eslint-disable-next-line no-unused-vars
 const StatsCard = ({ title, value, icon: Icon, color }) => {
   return (
     <div className="card" style={{ borderLeft: `4px solid ${color}` }}>

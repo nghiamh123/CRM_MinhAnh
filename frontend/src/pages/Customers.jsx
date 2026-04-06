@@ -3,6 +3,7 @@ import { Plus, Edit2, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-rea
 import { customerService, rentalService, deviceService } from '../services/api';
 import Modal from '../components/Modal';
 import { formatVND } from '../utils/format';
+import '../styles/Forms.css';
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
@@ -13,7 +14,7 @@ const Customers = () => {
   const [rentals, setRentals] = useState([]);
   const [devices, setDevices] = useState([]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     const [cRes, rRes, dRes] = await Promise.all([
       customerService.getAll(),
       rentalService.getAll(),
@@ -22,11 +23,14 @@ const Customers = () => {
     setCustomers(cRes.data);
     setRentals(rRes.data);
     setDevices(dRes.data);
-  };
+  }, []);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const init = async () => {
+      await fetchData();
+    };
+    init();
+  }, [fetchData]);
 
   const getCustomerStats = useCallback((customerId) => {
     const customerRentals = rentals.filter(r => r.customerId?.id === customerId || r.customerId === customerId);
@@ -71,10 +75,10 @@ const Customers = () => {
 
   const getSortIcon = (key) => {
     if (sortConfig.key !== key || sortConfig.direction === 'default') {
-      return <ArrowUpDown size={14} style={{ marginLeft: '5px', opacity: 0.4, display: 'inline-block', verticalAlign: 'middle' }} />;
+      return <ArrowUpDown size={14} className="sort-icon" />;
     }
-    if (sortConfig.direction === 'asc') return <ArrowUp size={14} style={{ marginLeft: '5px', color: 'var(--primary)', display: 'inline-block', verticalAlign: 'middle' }} />;
-    if (sortConfig.direction === 'desc') return <ArrowDown size={14} style={{ marginLeft: '5px', color: 'var(--primary)', display: 'inline-block', verticalAlign: 'middle' }} />;
+    if (sortConfig.direction === 'asc') return <ArrowUp size={14} className="sort-icon-active" />;
+    if (sortConfig.direction === 'desc') return <ArrowDown size={14} className="sort-icon-active" />;
   };
 
   const sortedCustomers = useMemo(() => {
@@ -121,21 +125,21 @@ const Customers = () => {
   return (
     <div className="container">
       <div className="flex-between">
-        <h1 style={{ fontSize: '1.875rem', fontWeight: 700 }}>Theo dõi Khách hàng</h1>
+        <h1 className="page-title">Theo dõi Khách hàng</h1>
       </div>
 
-      <div className="card" style={{ marginTop: '2rem' }}>
+      <div className="card card-mt">
         <div className="table-container">
           <table>
             <thead>
               <tr>
                 <th>ID</th>
-                <th onClick={() => handleSort('name')} style={{ cursor: 'pointer', userSelect: 'none' }}>Tên {getSortIcon('name')}</th>
+                <th onClick={() => handleSort('name')} className="table-header-cursor">Tên {getSortIcon('name')}</th>
                 <th>Phân loại</th>
                 <th>Số điện thoại</th>
                 <th>Căn cước</th>
-                <th onClick={() => handleSort('rentals')} style={{ cursor: 'pointer', userSelect: 'none' }}>Số lần thuê {getSortIcon('rentals')}</th>
-                <th onClick={() => handleSort('spent')} style={{ cursor: 'pointer', userSelect: 'none' }}>Tổng chi tiêu {getSortIcon('spent')}</th>
+                <th onClick={() => handleSort('rentals')} className="table-header-cursor">Số lần thuê {getSortIcon('rentals')}</th>
+                <th onClick={() => handleSort('spent')} className="table-header-cursor">Tổng chi tiêu {getSortIcon('spent')}</th>
                 <th>Thao tác</th>
               </tr>
             </thead>
@@ -143,22 +147,22 @@ const Customers = () => {
               {sortedCustomers.map(customer => (
                 <tr key={customer.id}>
                   <td>#{customer.id}</td>
-                  <td style={{ fontWeight: 600 }}>{customer.name}</td>
+                  <td className="cell-bold">{customer.name}</td>
                   <td>
                     {customer.isRental ? (
-                      <span className="status-badge status-available" style={{ fontSize: '0.7rem' }}>Rental</span>
+                      <span className="status-badge status-available badge-rental">Rental</span>
                     ) : (
-                      <span className="status-badge" style={{ fontSize: '0.7rem', background: '#e2e8f0', color: '#475569' }}>Cá nhân</span>
+                      <span className="status-badge badge-personal">Cá nhân</span>
                     )}
                   </td>
                   <td>{customer.phone}</td>
                   <td>{customer.identityCard}</td>
-                  <td style={{ fontWeight: 600, color: 'var(--primary)' }}>{customer._stats.count} lần</td>
-                  <td style={{ fontWeight: 600, color: 'var(--success)' }}>{formatVND(customer._stats.spent)}</td>
+                  <td className="cell-bold customer-color-primary">{customer._stats.count} lần</td>
+                  <td className="cell-bold customer-color-success">{formatVND(customer._stats.spent)}</td>
                   <td>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <button onClick={() => handleOpenModal(customer)} style={{ color: 'var(--primary)' }} title="Sửa thông tin"><Edit2 size={18} /></button>
-                      <button onClick={() => handleDelete(customer.id)} style={{ color: 'var(--danger)' }} title="Xóa khách"><Trash2 size={18} /></button>
+                    <div className="action-buttons">
+                      <button onClick={() => handleOpenModal(customer)} className="btn-icon-primary" title="Sửa thông tin"><Edit2 size={18} /></button>
+                      <button onClick={() => handleDelete(customer.id)} className="btn-icon-danger" title="Xóa khách"><Trash2 size={18} /></button>
                     </div>
                   </td>
                 </tr>
@@ -182,7 +186,7 @@ const Customers = () => {
               onChange={e => setFormData({...formData, name: e.target.value})}
             />
           </div>
-          <div style={{ marginTop: '1rem' }}>
+          <div className="form-group-mt">
             <label>Số điện thoại</label>
             <input 
               required
@@ -190,14 +194,14 @@ const Customers = () => {
               onChange={e => setFormData({...formData, phone: e.target.value})}
             />
           </div>
-          <div style={{ marginTop: '1rem' }}>
+          <div className="form-group-mt">
             <label>Số căn cước</label>
             <input 
               value={formData.identityCard || ''}
               onChange={e => setFormData({...formData, identityCard: e.target.value})}
             />
           </div>
-          <div style={{ marginTop: '1rem' }}>
+          <div className="form-group-mt">
             <label>Email</label>
             <input 
               type="email"
@@ -205,7 +209,7 @@ const Customers = () => {
               onChange={e => setFormData({...formData, email: e.target.value})}
             />
           </div>
-          <div style={{ marginTop: '1rem' }}>
+          <div className="form-group-mt">
             <label>Ghi chú</label>
             <textarea 
               rows="3"
@@ -213,17 +217,17 @@ const Customers = () => {
               onChange={e => setFormData({...formData, notes: e.target.value})}
             />
           </div>
-          <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="rental-checkbox-wrapper">
             <input 
               type="checkbox"
               id="isRentalCheck"
               checked={formData.isRental}
               onChange={e => setFormData({...formData, isRental: e.target.checked})}
-              style={{ width: 'auto', cursor: 'pointer' }}
+              className="checkbox-inline"
             />
-            <label htmlFor="isRentalCheck" style={{ fontSize: '0.9rem', cursor: 'pointer', fontWeight: 500 }}>Đánh dấu là Rental (Cửa hàng/Đối tác)</label>
+            <label htmlFor="isRentalCheck" className="rental-checkbox-label">Đánh dấu là Rental (Cửa hàng/Đối tác)</label>
           </div>
-          <div className="flex-between" style={{ marginTop: '2rem' }}>
+          <div className="flex-between form-actions-mt">
             <button type="button" className="btn-outline" onClick={() => setIsModalOpen(false)}>Hủy</button>
             <button type="submit" className="btn-primary">Lưu thay đổi</button>
           </div>

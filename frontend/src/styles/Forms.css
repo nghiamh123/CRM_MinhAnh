@@ -1,0 +1,475 @@
+/* src/styles/Forms.css */
+
+/* --- Sort Icons --- */
+.sort-icon {
+  margin-left: 5px;
+  opacity: 0.4;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.sort-icon-active {
+  margin-left: 5px;
+  color: var(--primary);
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* --- Common Form Spacing --- */
+.form-title {
+  margin-bottom: 1.5rem;
+}
+
+.form-group-mt {
+  margin-top: 1rem;
+}
+
+.form-actions-mt {
+  margin-top: 2rem;
+}
+
+/* --- Devices Form --- */
+.devices-grid-2 {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 10px;
+}
+
+.input-currency-wrapper {
+  position: relative;
+}
+
+.input-currency-field {
+  padding-right: 50px;
+}
+
+.input-currency-label {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light);
+  font-size: 0.85rem;
+  font-weight: 600;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.sn-container {
+  margin-top: 1.5rem;
+  padding: 15px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.sn-header {
+  margin-bottom: 10px;
+}
+
+.sn-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 0;
+}
+
+.sn-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.sn-input {
+  background: white;
+}
+
+.sn-note {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 10px;
+  font-style: italic;
+}
+
+/* --- Breadcrumbs / Headers --- */
+.page-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+}
+
+.card-mt {
+  margin-top: 2rem;
+}
+
+.table-header-cursor {
+  cursor: pointer;
+  user-select: none;
+}
+
+.cell-bold {
+  font-weight: 600;
+}
+
+.cell-capitalize {
+  text-transform: capitalize;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-icon-primary {
+  color: var(--primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-icon-danger {
+  color: var(--danger);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-icon-success {
+  color: var(--success);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.cell-nowrap {
+  white-space: nowrap;
+}
+
+.device-rảnh-text {
+  font-size: 0.7rem;
+  color: #64748b;
+  margin-top: 4px;
+  text-align: center;
+}
+
+/* --- Rentals Form --- */
+.rental-grid-main {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 2rem;
+}
+
+.rental-section-title {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.customer-detail-box {
+  padding: 1.25rem;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.customer-detail-label {
+  color: var(--primary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: block;
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.customer-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.rental-checkbox-wrapper {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.rental-checkbox {
+  width: auto;
+  cursor: pointer;
+  transform: scale(1.2);
+}
+
+.rental-checkbox-label {
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-weight: 600;
+  color: #334155;
+}
+
+.rental-date-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.cart-wrapper {
+  border-left: 1px solid #f1f5f9;
+  padding-left: 2rem;
+}
+
+.cart-title {
+  display: block;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.cart-filter-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1rem;
+}
+
+.cart-filter-select {
+  width: 130px;
+}
+
+.cart-filter-input {
+  flex: 1;
+}
+
+.device-list-container {
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 8px;
+  margin-bottom: 1.5rem;
+  background: #fff;
+}
+
+.device-list-empty {
+  text-align: center;
+  padding: 1rem;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.device-list-item {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+.device-list-item:hover {
+  background: #f8fafc;
+}
+
+.device-list-item-title {
+  font-weight: 600;
+}
+
+.device-list-item-meta {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.device-list-item-price-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.device-list-item-price {
+  font-weight: 700;
+  color: var(--success);
+}
+
+.cart-items-container {
+  min-height: 180px;
+}
+
+.cart-items-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 10px;
+  display: block;
+  text-transform: uppercase;
+}
+
+.cart-items-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #94a3b8;
+  border: 2px dashed #e2e8f0;
+  border-radius: 12px;
+}
+
+.cart-item {
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cart-item-info {
+  flex: 1;
+}
+
+.cart-item-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.cart-item-price {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.cart-item-sn-wrapper {
+  margin-top: 8px;
+}
+
+.cart-item-sn-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 5px;
+}
+
+.cart-item-sn-grid {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.sn-badge {
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.sn-badge-unselected {
+  border: 1px solid #cbd5e1;
+  background: white;
+  color: #475569;
+}
+.sn-badge-selected {
+  border: 1px solid var(--primary);
+  background: #eff6ff;
+  color: var(--primary);
+}
+
+.cart-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.qty-controls {
+  display: flex;
+  align-items: center;
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+}
+
+.qty-btn {
+  padding: 4px 10px;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+.qty-value {
+  padding: 0 10px;
+  font-weight: 700;
+  min-width: 35px;
+  text-align: center;
+  font-size: 1rem;
+}
+
+.remove-btn {
+  color: var(--danger);
+  background: none;
+  border: none;
+  padding: 5px;
+  cursor: pointer;
+}
+
+.total-wrapper {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #e2e8f0;
+}
+
+.total-label {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.total-value {
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: var(--primary);
+}
+
+.form-actions-wrapper {
+  margin-top: 3rem;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 1.5rem;
+}
+
+.btn-cancel {
+  padding: 0.8rem 2.5rem;
+  font-weight: 600;
+}
+
+.btn-confirm {
+  padding: 0.8rem 4rem;
+  font-weight: 700;
+  font-size: 1rem;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+.rental-cell-meta {
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+}
+.rental-cell-sn {
+  padding-left: 10px;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* --- Customers Form --- */
+.customer-color-primary {
+  color: var(--primary);
+}
+.customer-color-success {
+  color: var(--success);
+}
+.badge-rental {
+  font-size: 0.7rem;
+}
+.badge-personal {
+  font-size: 0.7rem;
+  background: #e2e8f0;
+  color: #475569;
+}
+.checkbox-inline {
+  width: auto;
+  cursor: pointer;
+}

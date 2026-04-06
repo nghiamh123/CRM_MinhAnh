@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Users, Camera, ClipboardCheck, AlertCircle } from 'lucide-react';
 import StatsCard from '../components/StatsCard';
 import { customerService, deviceService, rentalService } from '../services/api';
+import '../styles/Forms.css';
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -45,7 +46,7 @@ const Dashboard = () => {
 
   return (
     <div className="container">
-      <h1 style={{ marginBottom: '2rem', fontSize: '1.875rem', fontWeight: 700 }}>Tổng quan hệ thống</h1>
+      <h1 className="page-title" style={{ marginBottom: '2rem' }}>Tổng quan hệ thống</h1>
       
       <div className="dashboard-grid">
         <StatsCard 
@@ -75,8 +76,8 @@ const Dashboard = () => {
       </div>
 
       <div className="card">
-        <h2 style={{ marginBottom: '1rem', fontSize: '1.25rem' }}>Chào mừng trở lại</h2>
-        <p style={{ color: 'var(--text-light)' }}>
+        <h2 style={{ marginBottom: '1rem', fontSize: '1.25rem', fontWeight: 600 }}>Chào mừng trở lại</h2>
+        <p style={{ color: 'var(--text-light)', lineHeight: '1.5' }}>
           Hệ thống CRM quản lý thiết bị ảnh của bạn đang hoạt động ổn định. 
           Sử dụng các thanh điều hướng phía trên để quản lý khách hàng, thiết bị và đơn thuê.
         </p>

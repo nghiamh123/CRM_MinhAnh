@@ -3,22 +3,21 @@ const Device = require('../models/deviceModel');
 
 exports.getAll = async (req, res) => {
   try {
-    // We populate customerId and devices.device to get full details instead of just IDs
     const rentals = await Rental.find().populate('customerId').populate('devices.device');
     
-    // Check for late status
     const now = new Date();
-    let changed = false;
-    for (const r of rentals) {
-      if (r.status === 'renting' && r.plannedReturnDate && new Date(r.plannedReturnDate) < now) {
-        r.status = 'late';
-        await r.save();
-        changed = true;
+    // Return the rentals with dynamic status without blocking with database writes
+    const processedRentals = rentals.map(r => {
+      const rental = r.toObject();
+      if (rental.status === 'renting' && rental.plannedReturnDate && new Date(rental.plannedReturnDate) < now) {
+        rental.status = 'late';
       }
-    }
+      return rental;
+    });
     
-    res.json(rentals);
+    res.json(processedRentals);
   } catch (error) {
+    console.error('Error fetching rentals:', error);
     res.status(500).json({ error: error.message });
   }
 };

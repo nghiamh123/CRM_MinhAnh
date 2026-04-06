@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Plus, Edit2, Trash2, Camera, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { deviceService } from '../services/api';
 import { formatVND, formatDots, parseDots } from '../utils/format';
 import '../styles/Breadcrumbs.css';
+import '../styles/Forms.css';
 
 const Devices = () => {
   const [devices, setDevices] = useState([]);
@@ -11,14 +12,17 @@ const Devices = () => {
   const [serialNumbers, setSerialNumbers] = useState([]);
   const [formData, setFormData] = useState({ name: '', type: 'camera', pricePerDay: 0, description: '', totalQuantity: 1 });
 
-  const fetchDevices = async () => {
+  const fetchDevices = useCallback(async () => {
     const res = await deviceService.getAll();
     setDevices(res.data);
-  };
+  }, []);
 
   useEffect(() => {
-    fetchDevices();
-  }, []);
+    const init = async () => {
+      await fetchDevices();
+    };
+    init();
+  }, [fetchDevices]);
 
   const handleOpenForm = (device = null) => {
     setEditingDevice(device);
@@ -51,10 +55,10 @@ const Devices = () => {
 
   const getSortIcon = (key) => {
     if (sortConfig.key !== key || sortConfig.direction === 'default') {
-      return <ArrowUpDown size={14} style={{ marginLeft: '5px', opacity: 0.4, display: 'inline-block', verticalAlign: 'middle' }} />;
+      return <ArrowUpDown size={14} className="sort-icon" />;
     }
-    if (sortConfig.direction === 'asc') return <ArrowUp size={14} style={{ marginLeft: '5px', color: 'var(--primary)', display: 'inline-block', verticalAlign: 'middle' }} />;
-    if (sortConfig.direction === 'desc') return <ArrowDown size={14} style={{ marginLeft: '5px', color: 'var(--primary)', display: 'inline-block', verticalAlign: 'middle' }} />;
+    if (sortConfig.direction === 'asc') return <ArrowUp size={14} className="sort-icon-active" />;
+    if (sortConfig.direction === 'desc') return <ArrowDown size={14} className="sort-icon-active" />;
   };
 
   const sortedDevices = useMemo(() => {
@@ -132,10 +136,10 @@ const Devices = () => {
             Quay lại danh sách
           </div>
           
-          <h2 style={{ marginBottom: '1.5rem' }}>{view === 'add' ? 'Thêm thiết bị mới' : `Sửa thiết bị: ${editingDevice.name}`}</h2>
+          <h2 className="form-title">{view === 'add' ? 'Thêm thiết bị mới' : `Sửa thiết bị: ${editingDevice.name}`}</h2>
 
           <form onSubmit={handleSubmit}>
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '10px' }}>
+            <div className="devices-grid-2">
               <div>
                 <label>Tên thiết bị</label>
                 <input 
@@ -155,7 +159,7 @@ const Devices = () => {
                 />
               </div>
             </div>
-            <div style={{ marginTop: '1rem' }}>
+            <div className="form-group-mt">
               <label>Loại</label>
               <select 
                 value={formData.type}
@@ -167,34 +171,23 @@ const Devices = () => {
                 <option value="accessory">Phụ kiện khác</option>
               </select>
             </div>
-            <div style={{ marginTop: '1rem' }}>
+            <div className="form-group-mt">
               <label>Giá thuê/ngày (VNĐ)</label>
-              <div style={{ position: 'relative' }}>
+              <div className="input-currency-wrapper">
                 <input 
                   type="text"
                   required
-                  className="input-currency"
+                  className="input-currency input-currency-field"
                   value={formatDots(formData.pricePerDay)}
                   onChange={e => setFormData({...formData, pricePerDay: parseDots(e.target.value)})}
                   placeholder="Nhập giá tiền..."
-                  style={{ paddingRight: '50px' }}
                 />
-                <span style={{ 
-                  position: 'absolute', 
-                  right: '12px', 
-                  top: '50%', 
-                  transform: 'translateY(-50%)', 
-                  color: 'var(--text-light)', 
-                  fontSize: '0.85rem', 
-                  fontWeight: 600,
-                  pointerEvents: 'none',
-                  opacity: 0.7
-                }}>
+                <span className="input-currency-label">
                   VNĐ
                 </span>
               </div>
             </div>
-            <div style={{ marginTop: '1rem' }}>
+            <div className="form-group-mt">
               <label>Mô tả thiết bị</label>
               <textarea 
                 rows="3"
@@ -204,11 +197,11 @@ const Devices = () => {
               />
             </div>
             
-            <div style={{ marginTop: '1.5rem', padding: '15px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-              <div className="flex-between" style={{ marginBottom: '10px' }}>
-                <label style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--primary)', marginBottom: 0 }}>Số seri (S/N) thiết bị - Đăng ký {formData.totalQuantity} máy</label>
+            <div className="sn-container">
+              <div className="flex-between sn-header">
+                <label className="sn-label">Số seri (S/N) thiết bị - Đăng ký {formData.totalQuantity} máy</label>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px' }}>
+              <div className="sn-grid">
                 {Array.from({ length: formData.totalQuantity }).map((_, idx) => (
                   <input 
                     key={idx}
@@ -220,15 +213,15 @@ const Devices = () => {
                        newSNs[idx] = e.target.value;
                        setSerialNumbers(newSNs);
                     }}
-                    style={{ background: 'white' }}
+                    className="sn-input"
                   />
                 ))}
               </div>
-              <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '10px', fontStyle: 'italic' }}>
+              <p className="sn-note">
                 * Thay đổi số lượng phía trên để thấy danh sách S/N thay đổi tương ứng.
               </p>
             </div>
-            <div className="flex-between" style={{ marginTop: '2rem' }}>
+            <div className="flex-between form-actions-mt">
               <button type="button" className="btn-outline" onClick={handleBack}>Hủy</button>
               <button type="submit" className="btn-primary">Lưu thiết bị</button>
             </div>
@@ -241,20 +234,20 @@ const Devices = () => {
   return (
     <div className="container">
       <div className="flex-between">
-        <h1 style={{ fontSize: '1.875rem', fontWeight: 700 }}>Danh sách thiết bị</h1>
+        <h1 className="page-title">Danh sách thiết bị</h1>
         <button className="btn-primary" onClick={() => handleOpenForm()}>
           <Plus size={20} />
           <span>Thêm thiết bị</span>
         </button>
       </div>
 
-      <div className="card" style={{ marginTop: '2rem' }}>
+      <div className="card card-mt">
         <div className="table-container">
           <table>
             <thead>
               <tr>
                 <th>ID</th>
-                <th onClick={() => handleSort('name')} style={{ cursor: 'pointer', userSelect: 'none' }}>Tên thiết bị {getSortIcon('name')}</th>
+                <th onClick={() => handleSort('name')} className="table-header-cursor">Tên thiết bị {getSortIcon('name')}</th>
                 <th>Loại</th>
                 <th>Tồn kho</th>
                 <th>Giá thuê/ngày</th>
@@ -265,24 +258,24 @@ const Devices = () => {
               {sortedDevices.map(device => (
                 <tr key={device.id}>
                   <td>#{device.id}</td>
-                  <td style={{ fontWeight: 600 }}>{device.name}</td>
-                  <td style={{ textTransform: 'capitalize' }}>{device.type}</td>
+                  <td className="cell-bold">{device.name}</td>
+                  <td className="cell-capitalize">{device.type}</td>
                   <td>
-                    <span style={{ whiteSpace: 'nowrap' }} className={device.availableQuantity > 0 ? getStatusClass('available') : getStatusClass('late')}>
+                    <span className={`cell-nowrap ${device.availableQuantity > 0 ? getStatusClass('available') : getStatusClass('late')}`}>
                       {device.availableQuantity > 0 ? 'Có sẵn ' : 'Hết hàng '} 
                       ({device.availableQuantity || 0}/{device.totalQuantity || 1})
                     </span>
                     {device.units && device.units.length > 0 && (
-                      <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '4px', textAlign: 'center' }}>
+                      <div className="device-rảnh-text">
                         {device.units.filter(u => u.status === 'available').length} rảnh
                       </div>
                     )}
                   </td>
                   <td>{formatVND(device.pricePerDay)}</td>
                   <td>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <button onClick={() => handleOpenForm(device)} style={{ color: 'var(--primary)' }}><Edit2 size={18} /></button>
-                      <button onClick={() => handleDelete(device.id)} style={{ color: 'var(--danger)' }}><Trash2 size={18} /></button>
+                    <div className="action-buttons">
+                      <button onClick={() => handleOpenForm(device)} className="btn-icon-primary"><Edit2 size={18} /></button>
+                      <button onClick={() => handleDelete(device.id)} className="btn-icon-danger"><Trash2 size={18} /></button>
                     </div>
                   </td>
                 </tr>

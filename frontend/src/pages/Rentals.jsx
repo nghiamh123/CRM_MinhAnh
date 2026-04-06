@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Plus, Edit2, Trash2, CheckCircle, ChevronLeft, ChevronRight, Minus, X, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { rentalService, customerService, deviceService } from '../services/api';
 import SearchableSelect from '../components/SearchableSelect';
 import { formatVND } from '../utils/format';
 import '../styles/Breadcrumbs.css';
+import '../styles/Forms.css';
 
 const Rentals = () => {
   const [rentals, setRentals] = useState([]);
@@ -22,24 +23,27 @@ const Rentals = () => {
     status: 'renting'
   });
 
-  const fetchRentals = async () => {
+  const fetchRentals = useCallback(async () => {
     const res = await rentalService.getAll();
     setRentals(res.data);
-  };
+  }, []);
 
-  const fetchSupportData = async () => {
+  const fetchSupportData = useCallback(async () => {
     const [cRes, dRes] = await Promise.all([
       customerService.getAll(),
       deviceService.getAll()
     ]);
     setCustomers(cRes.data);
     setDevices(dRes.data);
-  };
+  }, []);
 
   useEffect(() => {
-    fetchRentals();
-    fetchSupportData();
-  }, []);
+    const init = async () => {
+      await fetchRentals();
+      await fetchSupportData();
+    };
+    init();
+  }, [fetchRentals, fetchSupportData]);
 
   const handleOpenForm = (rental = null) => {
     setEditingRental(rental);
@@ -101,10 +105,10 @@ const Rentals = () => {
 
   const getSortIcon = (key) => {
     if (sortConfig.key !== key || sortConfig.direction === 'default') {
-      return <ArrowUpDown size={14} style={{ marginLeft: '5px', opacity: 0.4, display: 'inline-block', verticalAlign: 'middle' }} />;
+      return <ArrowUpDown size={14} className="sort-icon" />;
     }
-    if (sortConfig.direction === 'asc') return <ArrowUp size={14} style={{ marginLeft: '5px', color: 'var(--primary)', display: 'inline-block', verticalAlign: 'middle' }} />;
-    if (sortConfig.direction === 'desc') return <ArrowDown size={14} style={{ marginLeft: '5px', color: 'var(--primary)', display: 'inline-block', verticalAlign: 'middle' }} />;
+    if (sortConfig.direction === 'asc') return <ArrowUp size={14} className="sort-icon-active" />;
+    if (sortConfig.direction === 'desc') return <ArrowDown size={14} className="sort-icon-active" />;
   };
 
   const sortedRentals = useMemo(() => {
@@ -306,13 +310,13 @@ const Rentals = () => {
             Quay lại danh sách
           </div>
           
-          <h2 style={{ marginBottom: '1.5rem' }}>{view === 'add' ? 'Tạo đơn thuê mới' : `Cập nhật đơn: #${editingRental.id}`}</h2>
+          <h2 className="form-title">{view === 'add' ? 'Tạo đơn thuê mới' : `Cập nhật đơn: #${editingRental.id}`}</h2>
 
           <form onSubmit={handleSubmit}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '2rem' }}>
+            <div className="rental-grid-main">
               <div>
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>1. Khách hàng (Chọn có sẵn)</label>
+                <div className="form-title">
+                  <label className="rental-section-title">1. Khách hàng (Chọn có sẵn)</label>
                   <SearchableSelect 
                     options={customers}
                     value={formData.customerId}
@@ -339,11 +343,11 @@ const Rentals = () => {
                   />
                 </div>
 
-                <div style={{ padding: '1.25rem', background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '12px', marginBottom: '1.5rem' }}>
-                  <label style={{ color: 'var(--primary)', fontSize: '0.85rem', fontWeight: 700, display: 'block', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                    {formData.customerId ? 'Chi tiết khách hàng' : 'Thông tin khách hàng mới'}
+              <div className="customer-detail-box">
+                  <label className="customer-detail-label">
+                    {formData.customerId ? 'Chi tiết khách hàng' : 'Thông khoách hàng mới'}
                   </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div className="customer-grid-2">
                     <input 
                       placeholder="Tên khách hàng *"
                       value={customerFormData.name}
@@ -368,21 +372,21 @@ const Rentals = () => {
                       onChange={e => setCustomerFormData({...customerFormData, notes: e.target.value})}
                     />
                   </div>
-                  <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '10px', padding: '8px', background: 'white', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  <div className="rental-checkbox-wrapper">
                     <input 
                       type="checkbox"
                       id="isRental"
                       checked={customerFormData.isRental}
                       onChange={e => setCustomerFormData({...customerFormData, isRental: e.target.checked})}
-                      style={{ width: 'auto', cursor: 'pointer', scale: '1.2' }}
+                      className="rental-checkbox"
                     />
-                    <label htmlFor="isRental" style={{ fontSize: '0.9rem', cursor: 'pointer', fontWeight: 600, color: '#334155' }}>Đánh dấu là Rental (Cửa hàng/Đối tác)</label>
+                    <label htmlFor="isRental" className="rental-checkbox-label">Đánh dấu là Rental (Cửa hàng/Đối tác)</label>
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                <div className="rental-date-grid">
                   <div>
-                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>2. Ngày thuê</label>
+                    <label className="rental-section-title">2. Ngày thuê</label>
                     <input 
                       type="date" 
                       required
@@ -391,7 +395,7 @@ const Rentals = () => {
                     />
                   </div>
                   <div>
-                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>3. Hẹn ngày trả</label>
+                    <label className="rental-section-title">3. Hẹn ngày trả</label>
                     <input 
                       type="date" 
                       required
@@ -402,12 +406,12 @@ const Rentals = () => {
                 </div>
               </div>
 
-              <div style={{ borderLeft: '1px solid #f1f5f9', paddingLeft: '2rem' }}>
-                <label style={{ display: 'block', marginBottom: '1rem',fontWeight: 600  }}>4. Giỏ hàng thiết bị</label>
+              <div className="cart-wrapper">
+                <label className="cart-title">4. Giỏ hàng thiết bị</label>
                 
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '1rem' }}>
+                <div className="cart-filter-row">
                   <select 
-                    style={{ width: '130px' }}
+                    className="cart-filter-select"
                     value={deviceFilterType}
                     onChange={e => setDeviceFilterType(e.target.value)}
                   >
@@ -418,23 +422,20 @@ const Rentals = () => {
                   </select>
                   <input 
                     placeholder="Tìm thiết bị nhanh..."
-                    style={{ flex: 1 }}
+                    className="cart-filter-input"
                     value={deviceSearchTerm}
                     onChange={e => setDeviceSearchTerm(e.target.value)}
                   />
                 </div>
 
-                <div style={{ maxHeight: '220px', overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '8px', marginBottom: '1.5rem', background: '#fff' }}>
+                <div className="device-list-container">
                   {availableDevices.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '1rem', color: '#94a3b8', fontSize: '0.9rem' }}>Không tìm thấy thiết bị phù hợp</div>
+                    <div className="device-list-empty">Không tìm thấy thiết bị phù hợp</div>
                   ) : (
                     availableDevices.map(device => (
                       <div 
                         key={device.id} 
-                        className="flex-between"
-                        style={{ padding: '10px 12px', borderBottom: '1px solid #f1f5f9', fontSize: '0.9rem', cursor: 'pointer', borderRadius: '8px', transition: 'background 0.2s' }}
-                        onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                        className="flex-between device-list-item"
                         onClick={() => {
                           if (formData.devices.find(d => d.device.id === device.id)) return;
                           
@@ -449,11 +450,11 @@ const Rentals = () => {
                         }}
                       >
                         <div>
-                          <div style={{ fontWeight: 600 }}>{device.name}</div>
-                          <div style={{ fontSize: '0.75rem', color: '#64748b' }}>Loại: {device.type} | Kho: {device.availableQuantity}</div>
+                          <div className="device-list-item-title">{device.name}</div>
+                          <div className="device-list-item-meta">Loại: {device.type} | Kho: {device.availableQuantity}</div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <span style={{ fontWeight: 700, color: 'var(--success)' }}>{formatVND(device.pricePerDay)}</span>
+                        <div className="device-list-item-price-wrapper">
+                          <span className="device-list-item-price">{formatVND(device.pricePerDay)}</span>
                           <Plus size={18} color="var(--primary)" />
                         </div>
                       </div>
@@ -461,38 +462,32 @@ const Rentals = () => {
                   )}
                 </div>
 
-                <div style={{ minHeight: '180px' }}>
-                  <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#475569', marginBottom: '10px', display: 'block', textTransform: 'uppercase' }}>Danh sách đã chọn</label>
+                <div className="cart-items-container">
+                  <label className="cart-items-title">Danh sách đã chọn ({formData.devices.length} thiết bị)</label>
                   {formData.devices.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '3rem 1rem', color: '#94a3b8', border: '2px dashed #e2e8f0', borderRadius: '12px' }}>
+                    <div className="cart-items-empty">
                       Giỏ hàng đang trống. Chọn thiết bị bên trên để thêm vào đơn.
                     </div>
                   ) : (
                     formData.devices.map((item, idx) => (
-                      <div key={idx} style={{ background: '#f8fafc', padding: '12px', borderRadius: '10px', marginBottom: '10px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{item.device.name}</div>
-                          <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Đơn giá: {formatVND(item.pricePerDay)}/ngày</div>
+                      <div key={idx} className="cart-item">
+                        <div className="cart-item-info">
+                          <div className="cart-item-title">{item.device.name}</div>
+                          <div className="cart-item-price">Đơn giá: {formatVND(item.pricePerDay)}/ngày</div>
                           
                           {/* Phân bổ Số Seri */}
-                          <div style={{ marginTop: '8px' }}>
-                            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#475569', marginBottom: '5px' }}>
+                          <div className="cart-item-sn-wrapper">
+                            <div className="cart-item-sn-label">
                               Chọn SN ({item.selectedSerials?.length || 0}/{item.quantity}):
                             </div>
-                            <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                            <div className="cart-item-sn-grid">
                               {(item.device.units || []).filter(u => u.status === 'available' || (editingRental && item.selectedSerials?.includes(u.serialNumber))).map(u => {
                                 const isSelected = item.selectedSerials?.includes(u.serialNumber);
                                 return (
                                   <button
                                     key={u.serialNumber}
                                     type="button"
-                                    style={{
-                                      padding: '2px 8px', fontSize: '0.75rem', cursor: 'pointer',
-                                      border: isSelected ? '1px solid var(--primary)' : '1px solid #cbd5e1',
-                                      background: isSelected ? '#eff6ff' : 'white',
-                                      color: isSelected ? 'var(--primary)' : '#475569',
-                                      borderRadius: '4px'
-                                    }}
+                                    className={isSelected ? "sn-badge sn-badge-selected" : "sn-badge sn-badge-unselected"}
                                     onClick={() => {
                                       const newDevs = [...formData.devices];
                                       let currentSerials = newDevs[idx].selectedSerials || [];
@@ -516,23 +511,23 @@ const Rentals = () => {
                             </div>
                           </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', background: 'white', border: '1px solid #cbd5e1', borderRadius: '6px' }}>
-                            <button type="button" onClick={() => handleUpdateQty(idx, -1)} style={{ padding: '4px 10px', border: 'none', background: 'none' }}><Minus size={16} /></button>
-                            <span style={{ padding: '0 10px', fontWeight: 700, minWidth: '35px', textAlign: 'center', fontSize: '1rem' }}>{item.quantity}</span>
-                            <button type="button" onClick={() => handleUpdateQty(idx, 1)} style={{ padding: '4px 10px', border: 'none', background: 'none' }}><Plus size={16} /></button>
+                        <div className="cart-item-actions">
+                          <div className="qty-controls">
+                            <button type="button" className="qty-btn" onClick={() => handleUpdateQty(idx, -1)}><Minus size={16} /></button>
+                            <span className="qty-value">{item.quantity}</span>
+                            <button type="button" className="qty-btn" onClick={() => handleUpdateQty(idx, 1)}><Plus size={16} /></button>
                           </div>
-                          <button type="button" onClick={() => handleRemoveDevice(idx)} style={{ color: 'var(--danger)', background: 'none', border: 'none', padding: '5px' }}><X size={20} /></button>
+                          <button type="button" className="remove-btn" onClick={() => handleRemoveDevice(idx)}><X size={20} /></button>
                         </div>
                       </div>
                     ))
                   )}
                 </div>
 
-                <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '2px solid #e2e8f0' }}>
+                <div className="total-wrapper">
                   <div className="flex-between">
-                    <span style={{ fontWeight: 700, fontSize: '1.1rem' }}>TỔNG TIỀN DỰ KIẾN:</span>
-                    <span style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--primary)' }}>
+                    <span className="total-label">TỔNG TIỀN DỰ KIẾN:</span>
+                    <span className="total-value">
                       {formatVND(calculateTotal())}
                     </span>
                   </div>
@@ -540,9 +535,9 @@ const Rentals = () => {
               </div>
             </div>
 
-            <div className="flex-between" style={{ marginTop: '3rem', borderTop: '1px solid #e2e8f0', paddingTop: '1.5rem' }}>
-              <button type="button" className="btn-outline" onClick={handleBack} style={{ padding: '0.8rem 2.5rem', fontWeight: 600 }}>Hủy bỏ</button>
-              <button type="submit" className="btn-primary" style={{ padding: '0.8rem 4rem', fontWeight: 700, fontSize: '1rem', boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)' }}>Xác nhận & Lưu đơn hàng</button>
+            <div className="flex-between form-actions-wrapper">
+              <button type="button" className="btn-outline btn-cancel" onClick={handleBack}>Hủy bỏ</button>
+              <button type="submit" className="btn-primary btn-confirm">Xác nhận & Lưu đơn hàng</button>
             </div>
           </form>
         </div>
@@ -553,24 +548,24 @@ const Rentals = () => {
   return (
     <div className="container">
       <div className="flex-between">
-        <h1 style={{ fontSize: '1.875rem', fontWeight: 700 }}>Quản lý đơn thuê</h1>
+        <h1 className="page-title">Quản lý đơn thuê</h1>
         <button className="btn-primary" onClick={() => handleOpenForm()}>
           <Plus size={20} />
           <span>Tạo đơn thuê</span>
         </button>
       </div>
 
-      <div className="card" style={{ marginTop: '2rem' }}>
+      <div className="card card-mt">
         <div className="table-container">
           <table>
             <thead>
               <tr>
                 <th>ID</th>
-                <th onClick={() => handleSort('customerName')} style={{ cursor: 'pointer', userSelect: 'none' }}>Khách hàng {getSortIcon('customerName')}</th>
+                <th onClick={() => handleSort('customerName')} className="table-header-cursor">Khách hàng {getSortIcon('customerName')}</th>
                 <th>Thiết bị</th>
-                <th onClick={() => handleSort('rentalDate')} style={{ cursor: 'pointer', userSelect: 'none' }}>Ngày thuê {getSortIcon('rentalDate')}</th>
-                <th onClick={() => handleSort('plannedReturnDate')} style={{ cursor: 'pointer', userSelect: 'none' }}>Hẹn trả {getSortIcon('plannedReturnDate')}</th>
-                <th onClick={() => handleSort('status')} style={{ cursor: 'pointer', userSelect: 'none' }}>Trạng thái {getSortIcon('status')}</th>
+                <th onClick={() => handleSort('rentalDate')} className="table-header-cursor">Ngày thuê {getSortIcon('rentalDate')}</th>
+                <th onClick={() => handleSort('plannedReturnDate')} className="table-header-cursor">Hẹn trả {getSortIcon('plannedReturnDate')}</th>
+                <th onClick={() => handleSort('status')} className="table-header-cursor">Trạng thái {getSortIcon('status')}</th>
                 <th>Thao tác</th>
               </tr>
             </thead>
@@ -578,15 +573,15 @@ const Rentals = () => {
               {sortedRentals.map(rental => (
                 <tr key={rental.id}>
                   <td>#{rental.id}</td>
-                  <td style={{ fontWeight: 600 }}>{getCustomerName(rental.customerId)}</td>
+                  <td className="cell-bold">{getCustomerName(rental.customerId)}</td>
                   <td>
                     {rental.devices && rental.devices.map((dItem, i) => {
                       const name = getDeviceName(dItem.device);
                       return (
-                        <div key={i} style={{ fontSize: '0.85rem', marginBottom: '4px' }}>
-                          <span style={{ fontWeight: 600 }}>• {name}</span> (x{dItem.quantity})
+                        <div key={i} className="rental-cell-meta">
+                          <span className="cell-bold">• {name}</span> (x{dItem.quantity})
                           {dItem.selectedSerials && dItem.selectedSerials.length > 0 && (
-                            <div style={{ paddingLeft: '10px', fontSize: '0.75rem', color: '#64748b' }}>
+                            <div className="rental-cell-sn">
                               SN: {dItem.selectedSerials.join(', ')}
                             </div>
                           )}
@@ -603,12 +598,12 @@ const Rentals = () => {
                     </span>
                   </td>
                   <td>
-                    <div style={{ display: 'flex', gap: '10px' }}>
+                    <div className="action-buttons">
                       {rental.status !== 'returned' && (
-                        <button onClick={() => handleReturn(rental)} style={{ color: 'var(--success)' }} title="Trả máy"><CheckCircle size={18} /></button>
+                        <button onClick={() => handleReturn(rental)} className="btn-icon-success" title="Trả máy"><CheckCircle size={18} /></button>
                       )}
-                      <button onClick={() => handleOpenForm(rental)} style={{ color: 'var(--primary)' }}><Edit2 size={18} /></button>
-                      <button onClick={() => handleDelete(rental.id)} style={{ color: 'var(--danger)' }}><Trash2 size={18} /></button>
+                      <button onClick={() => handleOpenForm(rental)} className="btn-icon-primary"><Edit2 size={18} /></button>
+                      <button onClick={() => handleDelete(rental.id)} className="btn-icon-danger"><Trash2 size={18} /></button>
                     </div>
                   </td>
                 </tr>
