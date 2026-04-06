@@ -6,6 +6,7 @@ const CalendarView = () => {
   const calendarInstanceRef = useRef(null);
   const [rentals, setRentals] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [tooltip, setTooltip] = useState(null);
 
   // Helper to get a stable color from user string (id or name)
   const getColorForUser = (userStr) => {
@@ -64,6 +65,12 @@ const CalendarView = () => {
            // Giữ nguyên màu đặc trưng nhưng nếu cần bạn có thể xử lý làm nhạt màu đi tại đây
         }
 
+        // Tạo danh sách thiết bị cho tooltip (hover)
+        const deviceListStr = rental.devices?.map(d => {
+          const name = d.device?.name || 'Thiết bị';
+          return `${name} (x${d.quantity})`;
+        }).join(', ') || 'Không có thông tin thiết bị';
+
         return {
           id: rental.id,
           title: `${customerName} - ${totalDevices} máy`,
@@ -71,7 +78,10 @@ const CalendarView = () => {
           end: endDateStr,
           allDay: true,
           backgroundColor: bgColor,
-          borderColor: 'transparent'
+          borderColor: 'transparent',
+          extendedProps: {
+            description: `Thiết bị: ${deviceListStr}`
+          }
         };
       });
 
@@ -94,6 +104,17 @@ const CalendarView = () => {
           today: 'Hôm nay',
           month: 'Tháng',
           week: 'Tuần'
+        },
+        eventMouseEnter: function(info) {
+          setTooltip({
+            x: info.jsEvent.clientX + 10,
+            y: info.jsEvent.clientY + 10,
+            content: info.event.extendedProps.description,
+            title: info.event.title
+          });
+        },
+        eventMouseLeave: function() {
+          setTooltip(null);
         }
       });
 
@@ -116,6 +137,33 @@ const CalendarView = () => {
           <div ref={calendarRef}></div>
         )}
       </div>
+
+      {/* Custom Immediate Tooltip */}
+      {tooltip && (
+        <div style={{
+          position: 'fixed',
+          top: tooltip.y,
+          left: tooltip.x,
+          backgroundColor: 'rgba(15, 23, 42, 0.95)',
+          color: 'white',
+          padding: '12px 16px',
+          borderRadius: '8px',
+          fontSize: '0.85rem',
+          zIndex: 9999,
+          pointerEvents: 'none',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.3)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          maxWidth: '300px',
+          backdropFilter: 'blur(4px)'
+        }}>
+          <div style={{ fontWeight: 700, marginBottom: '6px', borderBottom: '1px solid rgba(255, 255, 255, 0.2)', pb: '4px' }}>
+            {tooltip.title}
+          </div>
+          <div style={{ lineHeight: '1.4' }}>
+            {tooltip.content}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
