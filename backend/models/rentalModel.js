@@ -16,6 +16,7 @@ const rentalSchema = new mongoose.Schema({
   devices: [{
     device: { type: mongoose.Schema.Types.ObjectId, ref: 'Device', required: true },
     quantity: { type: Number, required: true, default: 1 },
+    selectedSerials: [{ type: String }],
     pricePerDay: { type: Number, required: true }
   }],
   status: { type: String, enum: ['renting', 'late', 'returned'], default: 'renting' },

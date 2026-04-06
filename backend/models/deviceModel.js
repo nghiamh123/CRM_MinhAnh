@@ -19,7 +19,10 @@ const deviceSchema = new mongoose.Schema({
   availableQuantity: { type: Number, default: 1 },
   pricePerDay: { type: Number },
   description: { type: String },
-  serialNumber: { type: String }
+  units: [{
+    serialNumber: { type: String, required: true },
+    status: { type: String, enum: ['available', 'renting', 'maintenance'], default: 'available' }
+  }]
 }, schemaOptions);
 
 module.exports = mongoose.model('Device', deviceSchema);

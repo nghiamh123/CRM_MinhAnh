@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Plus, Edit2, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { customerService, rentalService, deviceService } from '../services/api';
 import Modal from '../components/Modal';
 import { formatVND } from '../utils/format';
@@ -28,7 +28,7 @@ const Customers = () => {
     fetchData();
   }, []);
 
-  const getCustomerStats = (customerId) => {
+  const getCustomerStats = useCallback((customerId) => {
     const customerRentals = rentals.filter(r => r.customerId?.id === customerId || r.customerId === customerId);
     let totalSpent = 0;
     
@@ -54,7 +54,47 @@ const Customers = () => {
       count: customerRentals.length,
       spent: totalSpent
     };
+  }, [rentals, devices]);
+
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'default' });
+
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    } else if (sortConfig.key === key && sortConfig.direction === 'desc') {
+      direction = 'default';
+      key = null;
+    }
+    setSortConfig({ key, direction });
   };
+
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key || sortConfig.direction === 'default') {
+      return <ArrowUpDown size={14} style={{ marginLeft: '5px', opacity: 0.4, display: 'inline-block', verticalAlign: 'middle' }} />;
+    }
+    if (sortConfig.direction === 'asc') return <ArrowUp size={14} style={{ marginLeft: '5px', color: 'var(--primary)', display: 'inline-block', verticalAlign: 'middle' }} />;
+    if (sortConfig.direction === 'desc') return <ArrowDown size={14} style={{ marginLeft: '5px', color: 'var(--primary)', display: 'inline-block', verticalAlign: 'middle' }} />;
+  };
+
+  const sortedCustomers = useMemo(() => {
+    let sortableItems = customers.map(c => ({ ...c, _stats: getCustomerStats(c.id) }));
+    if (sortConfig.key !== null && sortConfig.direction !== 'default') {
+      sortableItems.sort((a, b) => {
+        let valA = sortConfig.key === 'name' ? (a.name || '').toLowerCase() :
+                   sortConfig.key === 'rentals' ? a._stats.count :
+                   sortConfig.key === 'spent' ? a._stats.spent : '';
+        let valB = sortConfig.key === 'name' ? (b.name || '').toLowerCase() :
+                   sortConfig.key === 'rentals' ? b._stats.count :
+                   sortConfig.key === 'spent' ? b._stats.spent : '';
+        
+        if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [customers, sortConfig, getCustomerStats]);
 
   const handleOpenModal = (customer = null) => {
     setEditingCustomer(customer);
@@ -90,17 +130,17 @@ const Customers = () => {
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Tên</th>
+                <th onClick={() => handleSort('name')} style={{ cursor: 'pointer', userSelect: 'none' }}>Tên {getSortIcon('name')}</th>
                 <th>Phân loại</th>
                 <th>Số điện thoại</th>
                 <th>Căn cước</th>
-                <th>Số lần thuê</th>
-                <th>Tổng chi tiêu</th>
+                <th onClick={() => handleSort('rentals')} style={{ cursor: 'pointer', userSelect: 'none' }}>Số lần thuê {getSortIcon('rentals')}</th>
+                <th onClick={() => handleSort('spent')} style={{ cursor: 'pointer', userSelect: 'none' }}>Tổng chi tiêu {getSortIcon('spent')}</th>
                 <th>Thao tác</th>
               </tr>
             </thead>
             <tbody>
-              {customers.map(customer => (
+              {sortedCustomers.map(customer => (
                 <tr key={customer.id}>
                   <td>#{customer.id}</td>
                   <td style={{ fontWeight: 600 }}>{customer.name}</td>
@@ -113,8 +153,8 @@ const Customers = () => {
                   </td>
                   <td>{customer.phone}</td>
                   <td>{customer.identityCard}</td>
-                  <td style={{ fontWeight: 600, color: 'var(--primary)' }}>{getCustomerStats(customer.id).count} lần</td>
-                  <td style={{ fontWeight: 600, color: 'var(--success)' }}>{formatVND(getCustomerStats(customer.id).spent)}</td>
+                  <td style={{ fontWeight: 600, color: 'var(--primary)' }}>{customer._stats.count} lần</td>
+                  <td style={{ fontWeight: 600, color: 'var(--success)' }}>{formatVND(customer._stats.spent)}</td>
                   <td>
                     <div style={{ display: 'flex', gap: '10px' }}>
                       <button onClick={() => handleOpenModal(customer)} style={{ color: 'var(--primary)' }} title="Sửa thông tin"><Edit2 size={18} /></button>

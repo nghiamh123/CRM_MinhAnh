@@ -32,14 +32,22 @@ exports.create = async (req, res) => {
     
     await newRental.save();
     
-    // Update device available quantities
+    // Update device available quantities and specific unit status
     if (req.body.devices && req.body.devices.length > 0) {
       for (let item of req.body.devices) {
         if (item.device) {
-          // decrement available quantity
-          await Device.findByIdAndUpdate(item.device, { 
-            $inc: { availableQuantity: -item.quantity }
-          });
+          const device = await Device.findById(item.device);
+          if (device) {
+             device.availableQuantity -= item.quantity;
+             if (item.selectedSerials && item.selectedSerials.length > 0) {
+               device.units.forEach(u => {
+                 if (item.selectedSerials.includes(u.serialNumber)) {
+                   u.status = 'renting';
+                 }
+               });
+             }
+             await device.save();
+          }
         }
       }
     }
@@ -62,10 +70,18 @@ exports.update = async (req, res) => {
       if (oldRental.devices && oldRental.devices.length > 0) {
         for (let item of oldRental.devices) {
           if (item.device) {
-            // increment available quantity
-            await Device.findByIdAndUpdate(item.device, { 
-              $inc: { availableQuantity: item.quantity }
-            });
+            const device = await Device.findById(item.device);
+            if (device) {
+               device.availableQuantity += item.quantity;
+               if (item.selectedSerials && item.selectedSerials.length > 0) {
+                 device.units.forEach(u => {
+                   if (item.selectedSerials.includes(u.serialNumber)) {
+                     u.status = 'available';
+                   }
+                 });
+               }
+               await device.save();
+            }
           }
         }
       }
@@ -90,9 +106,18 @@ exports.remove = async (req, res) => {
        if (rentalToRemove.devices && rentalToRemove.devices.length > 0) {
          for (let item of rentalToRemove.devices) {
            if (item.device) {
-             await Device.findByIdAndUpdate(item.device, { 
-               $inc: { availableQuantity: item.quantity }
-             });
+             const device = await Device.findById(item.device);
+             if (device) {
+               device.availableQuantity += item.quantity;
+               if (item.selectedSerials && item.selectedSerials.length > 0) {
+                 device.units.forEach(u => {
+                   if (item.selectedSerials.includes(u.serialNumber)) {
+                     u.status = 'available';
+                   }
+                 });
+               }
+               await device.save();
+             }
            }
          }
        }

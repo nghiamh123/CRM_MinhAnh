@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, CheckCircle, ChevronLeft, ChevronRight, Minus, X } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Plus, Edit2, Trash2, CheckCircle, ChevronLeft, ChevronRight, Minus, X, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { rentalService, customerService, deviceService } from '../services/api';
 import SearchableSelect from '../components/SearchableSelect';
 import { formatVND } from '../utils/format';
@@ -86,6 +86,55 @@ const Rentals = () => {
     setEditingRental(null);
   };
 
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'default' });
+
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    } else if (sortConfig.key === key && sortConfig.direction === 'desc') {
+      direction = 'default';
+      key = null;
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key || sortConfig.direction === 'default') {
+      return <ArrowUpDown size={14} style={{ marginLeft: '5px', opacity: 0.4, display: 'inline-block', verticalAlign: 'middle' }} />;
+    }
+    if (sortConfig.direction === 'asc') return <ArrowUp size={14} style={{ marginLeft: '5px', color: 'var(--primary)', display: 'inline-block', verticalAlign: 'middle' }} />;
+    if (sortConfig.direction === 'desc') return <ArrowDown size={14} style={{ marginLeft: '5px', color: 'var(--primary)', display: 'inline-block', verticalAlign: 'middle' }} />;
+  };
+
+  const sortedRentals = useMemo(() => {
+    let sortableItems = [...rentals];
+    if (sortConfig.key !== null && sortConfig.direction !== 'default') {
+      sortableItems.sort((a, b) => {
+        let valA, valB;
+        if (sortConfig.key === 'rentalDate') {
+          valA = new Date(a.rentalDate || 0).getTime();
+          valB = new Date(b.rentalDate || 0).getTime();
+        } else if (sortConfig.key === 'plannedReturnDate') {
+          valA = new Date(a.plannedReturnDate || 0).getTime();
+          valB = new Date(b.plannedReturnDate || 0).getTime();
+        } else if (sortConfig.key === 'customerName') {
+          const getName = c => (c && c.name) ? c.name : ((customers.find(x => x.id === c || x._id === c))?.name || 'Khách lạ');
+          valA = getName(a.customerId).toLowerCase();
+          valB = getName(b.customerId).toLowerCase();
+        } else if (sortConfig.key === 'status') {
+          valA = a.status || '';
+          valB = b.status || '';
+        }
+
+        if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [rentals, sortConfig, customers]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -111,14 +160,37 @@ const Rentals = () => {
       return;
     }
 
+    for (const item of formData.devices) {
+      const unitsInDB = (item.device?.units || []).length;
+      if (unitsInDB > 0 && (!item.selectedSerials || item.selectedSerials.length !== item.quantity)) {
+        // Nếu thiết bị chưa cập nhật đủ S/N cho số lượng kho, bỏ qua check ngặt nghèo hoặc yêu cầu update
+        const availableUnits = (item.device?.units || []).filter(u => u.status === 'available').length;
+        if (availableUnits >= item.quantity) {
+          alert(`Bạn chưa chọn đủ số seri cho thiết bị: ${item.device?.name || 'Không rõ'}`);
+          return;
+        }
+      }
+    }
+
     const payload = { 
       ...formData, 
       customerId: finalCustomerId,
-      devices: formData.devices.map(d => ({
-        device: d.device.id || d.device._id || d.device,
-        quantity: d.quantity,
-        pricePerDay: d.pricePerDay
-      }))
+      devices: formData.devices.map(d => {
+        let serials = d.selectedSerials || [];
+        // Tự cấp phát các serial ảo đối với các unit legacy chưa có thông tin trong db
+        if (serials.length < d.quantity) {
+           const lacking = d.quantity - serials.length;
+           for(let i=0; i<lacking; i++) {
+              serials.push(`LEGACY-SN-${Date.now()}-${i}`);
+           }
+        }
+        return {
+          device: d.device.id || d.device._id || d.device,
+          quantity: d.quantity,
+          pricePerDay: d.pricePerDay,
+          selectedSerials: serials
+        };
+      })
     };
 
     if (formData.customerId) {
@@ -165,15 +237,29 @@ const Rentals = () => {
 
   const handleUpdateQty = (idx, delta) => {
     const newDevices = [...formData.devices];
-    newDevices[idx].quantity += delta;
-    if (newDevices[idx].quantity < 1) newDevices[idx].quantity = 1;
+    let newQ = newDevices[idx].quantity + delta;
+    if (newQ < 1) newQ = 1;
     
     const dObj = newDevices[idx].device;
     const stock = dObj.availableQuantity || 0;
-    if (!editingRental && newDevices[idx].quantity > stock) {
+    if (!editingRental && newQ > stock) {
       alert(`Chỉ còn ${stock} máy trong kho!`);
-      newDevices[idx].quantity = stock;
+      newQ = stock;
     }
+    
+    newDevices[idx].quantity = newQ;
+    
+    let currentSerials = newDevices[idx].selectedSerials || [];
+    if (currentSerials.length > newQ) {
+       currentSerials = currentSerials.slice(0, newQ);
+    } else if (currentSerials.length < newQ) {
+       const availableUnits = (dObj.units || [])
+         .filter(u => u.status === 'available' && !currentSerials.includes(u.serialNumber))
+         .map(u => u.serialNumber);
+       const needed = newQ - currentSerials.length;
+       currentSerials = [...currentSerials, ...availableUnits.slice(0, needed)];
+    }
+    newDevices[idx].selectedSerials = currentSerials;
     
     setFormData({...formData, devices: newDevices});
   };
@@ -317,7 +403,7 @@ const Rentals = () => {
               </div>
 
               <div style={{ borderLeft: '1px solid #f1f5f9', paddingLeft: '2rem' }}>
-                <label style={{ display: 'block', marginBottom: '1rem', fontWeight: 700, fontSize: '1.1rem', color: 'var(--primary)' }}>4. Giỏ hàng thiết bị</label>
+                <label style={{ display: 'block', marginBottom: '1rem',fontWeight: 600  }}>4. Giỏ hàng thiết bị</label>
                 
                 <div style={{ display: 'flex', gap: '8px', marginBottom: '1rem' }}>
                   <select 
@@ -351,9 +437,14 @@ const Rentals = () => {
                         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                         onClick={() => {
                           if (formData.devices.find(d => d.device.id === device.id)) return;
+                          
+                          // Tự động gán Serial Number rảnh đầu tiên
+                          const availableUnits = (device.units || []).filter(u => u.status === 'available').map(u => u.serialNumber);
+                          const autoAssigned = availableUnits.slice(0, 1);
+                          
                           setFormData({
                             ...formData,
-                            devices: [...formData.devices, { device: device, quantity: 1, pricePerDay: device.pricePerDay }]
+                            devices: [...formData.devices, { device: device, quantity: 1, pricePerDay: device.pricePerDay, selectedSerials: autoAssigned }]
                           });
                         }}
                       >
@@ -382,6 +473,48 @@ const Rentals = () => {
                         <div style={{ flex: 1 }}>
                           <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{item.device.name}</div>
                           <div style={{ fontSize: '0.8rem', color: '#64748b' }}>Đơn giá: {formatVND(item.pricePerDay)}/ngày</div>
+                          
+                          {/* Phân bổ Số Seri */}
+                          <div style={{ marginTop: '8px' }}>
+                            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#475569', marginBottom: '5px' }}>
+                              Chọn SN ({item.selectedSerials?.length || 0}/{item.quantity}):
+                            </div>
+                            <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                              {(item.device.units || []).filter(u => u.status === 'available' || (editingRental && item.selectedSerials?.includes(u.serialNumber))).map(u => {
+                                const isSelected = item.selectedSerials?.includes(u.serialNumber);
+                                return (
+                                  <button
+                                    key={u.serialNumber}
+                                    type="button"
+                                    style={{
+                                      padding: '2px 8px', fontSize: '0.75rem', cursor: 'pointer',
+                                      border: isSelected ? '1px solid var(--primary)' : '1px solid #cbd5e1',
+                                      background: isSelected ? '#eff6ff' : 'white',
+                                      color: isSelected ? 'var(--primary)' : '#475569',
+                                      borderRadius: '4px'
+                                    }}
+                                    onClick={() => {
+                                      const newDevs = [...formData.devices];
+                                      let currentSerials = newDevs[idx].selectedSerials || [];
+                                      if (isSelected) {
+                                        currentSerials = currentSerials.filter(sn => sn !== u.serialNumber);
+                                      } else {
+                                        if (currentSerials.length < newDevs[idx].quantity) {
+                                          currentSerials.push(u.serialNumber);
+                                        } else {
+                                          alert(`Chỉ được chọn tối đa ${newDevs[idx].quantity} S/N! Tăng số lượng nếu cần.`);
+                                        }
+                                      }
+                                      newDevs[idx].selectedSerials = currentSerials;
+                                      setFormData({...formData, devices: newDevs});
+                                    }}
+                                  >
+                                    {u.serialNumber}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', background: 'white', border: '1px solid #cbd5e1', borderRadius: '6px' }}>
@@ -433,16 +566,16 @@ const Rentals = () => {
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Khách hàng</th>
+                <th onClick={() => handleSort('customerName')} style={{ cursor: 'pointer', userSelect: 'none' }}>Khách hàng {getSortIcon('customerName')}</th>
                 <th>Thiết bị</th>
-                <th>Ngày thuê</th>
-                <th>Hẹn trả</th>
-                <th>Trạng thái</th>
+                <th onClick={() => handleSort('rentalDate')} style={{ cursor: 'pointer', userSelect: 'none' }}>Ngày thuê {getSortIcon('rentalDate')}</th>
+                <th onClick={() => handleSort('plannedReturnDate')} style={{ cursor: 'pointer', userSelect: 'none' }}>Hẹn trả {getSortIcon('plannedReturnDate')}</th>
+                <th onClick={() => handleSort('status')} style={{ cursor: 'pointer', userSelect: 'none' }}>Trạng thái {getSortIcon('status')}</th>
                 <th>Thao tác</th>
               </tr>
             </thead>
             <tbody>
-              {rentals.map(rental => (
+              {sortedRentals.map(rental => (
                 <tr key={rental.id}>
                   <td>#{rental.id}</td>
                   <td style={{ fontWeight: 600 }}>{getCustomerName(rental.customerId)}</td>
@@ -450,8 +583,13 @@ const Rentals = () => {
                     {rental.devices && rental.devices.map((dItem, i) => {
                       const name = getDeviceName(dItem.device);
                       return (
-                        <div key={i} style={{ fontSize: '0.85rem', marginBottom: '2px' }}>
-                          • {name} (x{dItem.quantity})
+                        <div key={i} style={{ fontSize: '0.85rem', marginBottom: '4px' }}>
+                          <span style={{ fontWeight: 600 }}>• {name}</span> (x{dItem.quantity})
+                          {dItem.selectedSerials && dItem.selectedSerials.length > 0 && (
+                            <div style={{ paddingLeft: '10px', fontSize: '0.75rem', color: '#64748b' }}>
+                              SN: {dItem.selectedSerials.join(', ')}
+                            </div>
+                          )}
                         </div>
                       );
                     })}
