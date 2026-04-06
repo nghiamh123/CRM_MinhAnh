@@ -6,7 +6,7 @@ const dbConnect = require('./lib/db');
 const apiRoutes = require('./routes/api');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 // Connect to MongoDB once early in the app lifecycle
 dbConnect();

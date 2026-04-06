@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Camera, Users, ClipboardList, LayoutDashboard, Menu, X } from 'lucide-react';
+import { Camera, Users, ClipboardList, LayoutDashboard, Menu, X, Calendar } from 'lucide-react';
 import '../styles/Navbar.css';
 
 const Navbar = () => {
@@ -37,6 +37,10 @@ const Navbar = () => {
           <NavLink to="/rentals" className={({ isActive }) => isActive ? 'active' : ''} onClick={closeMenu}>
             <ClipboardList size={20} />
             <span>Đơn thuê</span>
+          </NavLink>
+          <NavLink to="/calendar" className={({ isActive }) => isActive ? 'active' : ''} onClick={closeMenu}>
+            <Calendar size={20} />
+            <span>Lịch</span>
           </NavLink>
         </div>
       </div>

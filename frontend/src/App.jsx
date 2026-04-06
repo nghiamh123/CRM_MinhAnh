@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import Customers from './pages/Customers';
 import Devices from './pages/Devices';
 import Rentals from './pages/Rentals';
+import CalendarView from './pages/CalendarView';
 import './styles/global.css';
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
             <Route path="/customers" element={<Customers />} />
             <Route path="/devices" element={<Devices />} />
             <Route path="/rentals" element={<Rentals />} />
+            <Route path="/calendar" element={<CalendarView />} />
           </Routes>
         </main>
       </div>
