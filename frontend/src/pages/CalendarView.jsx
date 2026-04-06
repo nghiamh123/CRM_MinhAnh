@@ -1,11 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { rentalService } from '../services/api';
+import { useDataContext } from '../context/DataContext';
 
 const CalendarView = () => {
+  const { rentals, loading } = useDataContext();
   const calendarRef = useRef(null);
   const calendarInstanceRef = useRef(null);
-  const [rentals, setRentals] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [tooltip, setTooltip] = useState(null);
 
   // Helper to get a stable color from user string (id or name)
@@ -23,20 +22,6 @@ const CalendarView = () => {
     const index = Math.abs(hash) % colors.length;
     return colors[index];
   };
-
-  useEffect(() => {
-    const fetchRentals = async () => {
-      try {
-        const res = await rentalService.getAll();
-        setRentals(res.data);
-      } catch (error) {
-        console.error("Lỗi khi tải dữ liệu đơn thuê: ", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchRentals();
-  }, []);
 
   useEffect(() => {
     // Only initialize if FullCalendar CDN is loaded, the DOM ref is ready, and data is loaded

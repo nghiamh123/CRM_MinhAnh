@@ -6,6 +6,7 @@ import Customers from './pages/Customers';
 import Devices from './pages/Devices';
 import Rentals from './pages/Rentals';
 import CalendarView from './pages/CalendarView';
+import { DataProvider } from './context/DataContext';
 import './styles/global.css';
 
 function App() {
@@ -14,13 +15,15 @@ function App() {
       <div className="app">
         <Navbar />
         <main className="main-content">
-          <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/customers" element={<Customers />} />
-            <Route path="/devices" element={<Devices />} />
-            <Route path="/rentals" element={<Rentals />} />
-            <Route path="/calendar" element={<CalendarView />} />
-          </Routes>
+          <DataProvider>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/customers" element={<Customers />} />
+              <Route path="/devices" element={<Devices />} />
+              <Route path="/rentals" element={<Rentals />} />
+              <Route path="/calendar" element={<CalendarView />} />
+            </Routes>
+          </DataProvider>
         </main>
       </div>
     </Router>

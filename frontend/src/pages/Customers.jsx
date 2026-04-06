@@ -1,36 +1,16 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Plus, Edit2, Trash2, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
-import { customerService, rentalService, deviceService } from '../services/api';
+import { customerService } from '../services/api';
 import Modal from '../components/Modal';
 import { formatVND } from '../utils/format';
+import { useDataContext } from '../context/DataContext';
 import '../styles/Forms.css';
 
 const Customers = () => {
-  const [customers, setCustomers] = useState([]);
+  const { customers, rentals, devices, refreshData, loading } = useDataContext();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [formData, setFormData] = useState({ name: '', phone: '', identityCard: '', email: '', notes: '', isRental: false });
-
-  const [rentals, setRentals] = useState([]);
-  const [devices, setDevices] = useState([]);
-
-  const fetchData = useCallback(async () => {
-    const [cRes, rRes, dRes] = await Promise.all([
-      customerService.getAll(),
-      rentalService.getAll(),
-      deviceService.getAll()
-    ]);
-    setCustomers(cRes.data);
-    setRentals(rRes.data);
-    setDevices(dRes.data);
-  }, []);
-
-  useEffect(() => {
-    const init = async () => {
-      await fetchData();
-    };
-    init();
-  }, [fetchData]);
 
   const getCustomerStats = useCallback((customerId) => {
     const customerRentals = rentals.filter(r => r.customerId?.id === customerId || r.customerId === customerId);
@@ -112,15 +92,17 @@ const Customers = () => {
       await customerService.update(editingCustomer.id, formData);
     }
     setIsModalOpen(false);
-    fetchData();
+    refreshData();
   };
 
   const handleDelete = async (id) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa khách hàng này?')) {
       await customerService.remove(id);
-      fetchData();
+      refreshData();
     }
   };
+
+  if (loading && customers.length === 0) return <div className="container">Đang tải dữ liệu khách hàng...</div>;
 
   return (
     <div className="container">

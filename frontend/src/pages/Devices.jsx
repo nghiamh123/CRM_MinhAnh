@@ -1,28 +1,17 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Plus, Edit2, Trash2, Camera, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Plus, Edit2, Trash2, ChevronLeft, ChevronRight, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { deviceService } from '../services/api';
 import { formatVND, formatDots, parseDots } from '../utils/format';
+import { useDataContext } from '../context/DataContext';
 import '../styles/Breadcrumbs.css';
 import '../styles/Forms.css';
 
 const Devices = () => {
-  const [devices, setDevices] = useState([]);
+  const { devices, refreshData, loading } = useDataContext();
   const [view, setView] = useState('list'); // 'list', 'add', 'edit'
   const [editingDevice, setEditingDevice] = useState(null);
   const [serialNumbers, setSerialNumbers] = useState([]);
   const [formData, setFormData] = useState({ name: '', type: 'camera', pricePerDay: 0, description: '', totalQuantity: 1 });
-
-  const fetchDevices = useCallback(async () => {
-    const res = await deviceService.getAll();
-    setDevices(res.data);
-  }, []);
-
-  useEffect(() => {
-    const init = async () => {
-      await fetchDevices();
-    };
-    init();
-  }, [fetchDevices]);
 
   const handleOpenForm = (device = null) => {
     setEditingDevice(device);
@@ -107,15 +96,17 @@ const Devices = () => {
       });
     }
     handleBack();
-    fetchDevices();
+    refreshData();
   };
 
   const handleDelete = async (id) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa thiết bị này?')) {
       await deviceService.remove(id);
-      fetchDevices();
+      refreshData();
     }
   };
+
+  if (loading && devices.length === 0) return <div className="container">Đang tải danh sách thiết bị...</div>;
 
   const getStatusClass = (status) => {
     return `status-badge status-${status}`;

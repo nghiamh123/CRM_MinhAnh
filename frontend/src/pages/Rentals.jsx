@@ -1,15 +1,14 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Plus, Edit2, Trash2, CheckCircle, ChevronLeft, ChevronRight, Minus, X, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
-import { rentalService, customerService, deviceService } from '../services/api';
+import { rentalService, customerService } from '../services/api';
 import SearchableSelect from '../components/SearchableSelect';
 import { formatVND } from '../utils/format';
+import { useDataContext } from '../context/DataContext';
 import '../styles/Breadcrumbs.css';
 import '../styles/Forms.css';
 
 const Rentals = () => {
-  const [rentals, setRentals] = useState([]);
-  const [customers, setCustomers] = useState([]);
-  const [devices, setDevices] = useState([]);
+  const { rentals, customers, devices, refreshData, loading } = useDataContext();
   const [view, setView] = useState('list'); // 'list', 'add', 'edit'
   const [editingRental, setEditingRental] = useState(null);
   const [deviceFilterType, setDeviceFilterType] = useState('all');
@@ -22,28 +21,6 @@ const Rentals = () => {
     plannedReturnDate: '',
     status: 'renting'
   });
-
-  const fetchRentals = useCallback(async () => {
-    const res = await rentalService.getAll();
-    setRentals(res.data);
-  }, []);
-
-  const fetchSupportData = useCallback(async () => {
-    const [cRes, dRes] = await Promise.all([
-      customerService.getAll(),
-      deviceService.getAll()
-    ]);
-    setCustomers(cRes.data);
-    setDevices(dRes.data);
-  }, []);
-
-  useEffect(() => {
-    const init = async () => {
-      await fetchRentals();
-      await fetchSupportData();
-    };
-    init();
-  }, [fetchRentals, fetchSupportData]);
 
   const handleOpenForm = (rental = null) => {
     setEditingRental(rental);
@@ -208,25 +185,24 @@ const Rentals = () => {
     }
     
     handleBack();
-    fetchRentals();
-    fetchSupportData(); 
+    refreshData();
   };
 
   const handleReturn = async (rental) => {
     if (window.confirm('Xác nhận trả thiết bị?')) {
       await rentalService.update(rental.id, { status: 'returned' });
-      fetchRentals();
-      fetchSupportData();
+      refreshData();
     }
   };
 
   const handleDelete = async (id) => {
     if (window.confirm('Xoá đơn thuê này?')) {
       await rentalService.remove(id);
-      fetchRentals();
-      fetchSupportData();
+      refreshData();
     }
   };
+
+  if (loading && rentals.length === 0) return <div className="container">Đang tải danh sách đơn thuê...</div>;
 
   const getCustomerName = (cust) => {
     if (cust && cust.name) return cust.name;

@@ -1,46 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Users, Camera, ClipboardCheck, AlertCircle } from 'lucide-react';
 import StatsCard from '../components/StatsCard';
-import { customerService, deviceService, rentalService } from '../services/api';
+import { useDataContext } from '../context/DataContext';
 import '../styles/Forms.css';
 
 const Dashboard = () => {
-  const [stats, setStats] = useState({
-    totalCustomers: 0,
-    totalDevices: 0,
-    rentingDevices: 0,
-    lateRentals: 0
-  });
-  const [loading, setLoading] = useState(true);
+  const { customers, devices, rentals, loading } = useDataContext();
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const [customers, devices, rentals] = await Promise.all([
-          customerService.getAll(),
-          deviceService.getAll(),
-          rentalService.getAll()
-        ]);
-
-        setStats({
-          totalCustomers: customers.data.length,
-          totalDevices: devices.data.reduce((sum, d) => sum + (d.totalQuantity || 0), 0),
-          rentingDevices: devices.data.reduce((sum, d) => {
-            const total = d.totalQuantity || 0;
-            const available = d.availableQuantity !== undefined ? d.availableQuantity : total;
-            return sum + (total - available);
-          }, 0),
-          lateRentals: rentals.data.filter(r => r.status === 'late').length
-        });
-      } catch (error) {
-        console.error("Error fetching stats:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStats();
-  }, []);
+  const totalCustomers = customers.length;
+  const totalDevicesCount = devices.reduce((sum, d) => sum + (d.totalQuantity || 0), 0);
+  const rentingDevicesCount = devices.reduce((sum, d) => {
+    const total = d.totalQuantity || 0;
+    const available = d.availableQuantity !== undefined ? d.availableQuantity : total;
+    return sum + (total - available);
+  }, 0);
+  const lateRentalsCount = rentals.filter(r => r.status === 'late').length;
 
   if (loading) return <div className="container">Đang tải dashboard...</div>;
 
@@ -51,25 +25,25 @@ const Dashboard = () => {
       <div className="dashboard-grid">
         <StatsCard 
           title="Tổng khách hàng" 
-          value={stats.totalCustomers} 
+          value={totalCustomers} 
           icon={Users} 
           color="#3b82f6" 
         />
         <StatsCard 
           title="Tổng thiết bị" 
-          value={stats.totalDevices} 
+          value={totalDevicesCount} 
           icon={Camera} 
           color="#10b981" 
         />
         <StatsCard 
           title="Thiết bị đang thuê" 
-          value={stats.rentingDevices} 
+          value={rentingDevicesCount} 
           icon={ClipboardCheck} 
           color="#f59e0b" 
         />
         <StatsCard 
           title="Đơn trễ hạn" 
-          value={stats.lateRentals} 
+          value={lateRentalsCount} 
           icon={AlertCircle} 
           color="#ef4444" 
         />
