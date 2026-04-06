@@ -6,12 +6,17 @@ exports.getAll = async (req, res) => {
     const rentals = await Rental.find().populate('customerId').populate('devices.device');
     
     const now = new Date();
-    // Return the rentals with dynamic status without blocking with database writes
     const processedRentals = rentals.map(r => {
       const rental = r.toObject();
       if (rental.status === 'renting' && rental.plannedReturnDate && new Date(rental.plannedReturnDate) < now) {
         rental.status = 'late';
       }
+
+      // Normalize customerId: ensure 'id' field always exists (matching customer model virtual)
+      if (rental.customerId && rental.customerId._id) {
+        rental.customerId.id = rental.customerId._id.toString();
+      }
+
       return rental;
     });
     
