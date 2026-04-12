@@ -8,8 +8,17 @@ const schemaOptions = {
       delete ret._id;
       delete ret.__v;
     }
+  },
+  toObject: {
+    virtuals: true,
+    transform: function (doc, ret) {
+      ret.id = ret._id;
+      delete ret._id;
+      delete ret.__v;
+    }
   }
 };
+
 
 const customerSchema = new mongoose.Schema({
   name: { type: String, required: true },

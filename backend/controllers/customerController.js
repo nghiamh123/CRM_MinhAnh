@@ -1,5 +1,8 @@
 const Customer = require('../models/customerModel');
+const Rental = require('../models/rentalModel');
+const Device = require('../models/deviceModel');
 const { deleteFile } = require('./uploadController');
+
 
 
 exports.getAll = async (req, res) => {
@@ -35,15 +38,43 @@ exports.remove = async (req, res) => {
     const customer = await Customer.findById(req.params.id);
     if (!customer) return res.status(404).json({ error: 'Customer not found' });
 
+    // Find all rentals for this customer to restore devices
+    const associatedRentals = await Rental.find({ customerId: req.params.id });
+    
+    for (const rental of associatedRentals) {
+      if (rental.status !== 'returned') {
+        // Restore device quantities and unit statuses
+        for (const item of rental.devices) {
+          if (item.device) {
+            const device = await Device.findById(item.device);
+            if (device) {
+              device.availableQuantity += item.quantity;
+              if (item.selectedSerials && item.selectedSerials.length > 0) {
+                device.units.forEach(u => {
+                  if (item.selectedSerials.includes(u.serialNumber)) {
+                    u.status = 'available';
+                  }
+                });
+              }
+              await device.save();
+            }
+          }
+        }
+      }
+      // Delete the rental record
+      await Rental.findByIdAndDelete(rental._id);
+    }
+
     // Delete images from R2
     if (customer.idCardFront) await deleteFile(customer.idCardFront);
     if (customer.idCardBack) await deleteFile(customer.idCardBack);
     if (customer.idCardSelfie) await deleteFile(customer.idCardSelfie);
 
     const deleted = await Customer.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Deleted successfully' });
+    res.json({ message: 'Deleted successfully (including associated rentals)' });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 };
+
 

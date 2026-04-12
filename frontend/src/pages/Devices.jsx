@@ -237,7 +237,6 @@ const Devices = () => {
           <table>
             <thead>
               <tr>
-                <th>ID</th>
                 <th onClick={() => handleSort('name')} className="table-header-cursor">Tên thiết bị {getSortIcon('name')}</th>
                 <th>Loại</th>
                 <th>Tồn kho</th>
@@ -248,8 +247,8 @@ const Devices = () => {
             <tbody>
               {sortedDevices.map(device => (
                 <tr key={device.id}>
-                  <td>#{device.id}</td>
                   <td className="cell-bold">{device.name}</td>
+
                   <td className="cell-capitalize">{device.type}</td>
                   <td>
                     <span className={`cell-nowrap ${device.availableQuantity > 0 ? getStatusClass('available') : getStatusClass('late')}`}>
