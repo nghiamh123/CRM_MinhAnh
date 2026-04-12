@@ -17,6 +17,9 @@ const customerSchema = new mongoose.Schema({
   email: { type: String },
   address: { type: String },
   identityCard: { type: String },
+  idCardFront: { type: String },
+  idCardBack: { type: String },
+  idCardSelfie: { type: String },
   notes: { type: String },
   isRental: { type: Boolean, default: false }
 }, schemaOptions);

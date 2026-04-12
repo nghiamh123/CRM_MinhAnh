@@ -18,6 +18,18 @@ export const customerService = {
   remove: (id) => api.delete(`/customers/${id}`),
 };
 
+export const uploadService = {
+  uploadImage: (file) => {
+    const formData = new FormData();
+    formData.append("image", file);
+    return api.post("/upload", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+  },
+};
+
 export const deviceService = {
   getAll: () => api.get("/devices"),
   create: (data) => api.post("/devices", data),

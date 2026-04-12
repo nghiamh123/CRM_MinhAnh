@@ -3,6 +3,8 @@ const router = express.Router();
 const customerController = require('../controllers/customerController');
 const deviceController = require('../controllers/deviceController');
 const rentalController = require('../controllers/rentalController');
+const uploadController = require('../controllers/uploadController');
+
 
 // Customer Routes
 router.get('/customers', customerController.getAll);
@@ -21,5 +23,9 @@ router.get('/rentals', rentalController.getAll);
 router.post('/rentals', rentalController.create);
 router.put('/rentals/:id', rentalController.update);
 router.delete('/rentals/:id', rentalController.remove);
+
+// Upload Route
+router.post('/upload', uploadController.uploadImage);
+
 
 module.exports = router;
