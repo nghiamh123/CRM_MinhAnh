@@ -1,4 +1,6 @@
 const Customer = require('../models/customerModel');
+const { deleteFile } = require('./uploadController');
+
 
 exports.getAll = async (req, res) => {
   try {
@@ -30,10 +32,18 @@ exports.update = async (req, res) => {
 
 exports.remove = async (req, res) => {
   try {
+    const customer = await Customer.findById(req.params.id);
+    if (!customer) return res.status(404).json({ error: 'Customer not found' });
+
+    // Delete images from R2
+    if (customer.idCardFront) await deleteFile(customer.idCardFront);
+    if (customer.idCardBack) await deleteFile(customer.idCardBack);
+    if (customer.idCardSelfie) await deleteFile(customer.idCardSelfie);
+
     const deleted = await Customer.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ error: 'Customer not found' });
     res.json({ message: 'Deleted successfully' });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 };
+

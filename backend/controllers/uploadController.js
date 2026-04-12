@@ -1,4 +1,5 @@
-const { PutObjectCommand } = require('@aws-sdk/client-s3');
+const { PutObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+
 const { s3Client } = require('../lib/s3Config');
 const multer = require('multer');
 const path = require('path');
@@ -43,7 +44,22 @@ exports.uploadImage = (req, res) => {
       res.json({ url: publicUrl });
     } catch (error) {
       console.error('Error uploading to R2:', error);
-      res.status(500).json({ error: 'Lỗi khi upload ảnh lên Cloudflare' });
     }
   });
+};
+
+exports.deleteFile = async (url) => {
+  if (!url) return;
+  try {
+    // Extract file name from URL
+    const fileName = url.split('/').pop();
+    const params = {
+      Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME,
+      Key: fileName,
+    };
+    await s3Client.send(new DeleteObjectCommand(params));
+    console.log(`Deleted file: ${fileName}`);
+  } catch (error) {
+    console.error('Error deleting from R2:', error);
+  }
 };
